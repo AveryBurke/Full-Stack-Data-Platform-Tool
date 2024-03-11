@@ -1,0 +1,136 @@
+model studies {
+  nct_id                              String                      @id @unique(map: "index_studies_on_nct_id") @db.VarChar
+  nlm_download_date_description       String?                      @db.VarChar
+  study_first_submitted_date          DateTime?                    @db.Date
+  results_first_submitted_date        DateTime?                    @db.Date
+  disposition_first_submitted_date    DateTime?                    @db.Date
+  last_update_submitted_date          DateTime?                    @db.Date
+  study_first_submitted_qc_date       DateTime?                    @db.Date
+  study_first_posted_date             DateTime?                    @db.Date
+  study_first_posted_date_type        String?                      @db.VarChar
+  results_first_submitted_qc_date     DateTime?                    @db.Date
+  results_first_posted_date           DateTime?                    @db.Date
+  results_first_posted_date_type      String?                      @db.VarChar
+  disposition_first_submitted_qc_date DateTime?                    @db.Date
+  disposition_first_posted_date       DateTime?                    @db.Date
+  disposition_first_posted_date_type  String?                      @db.VarChar
+  last_update_submitted_qc_date       DateTime?                    @db.Date
+  last_update_posted_date             DateTime?                    @db.Date
+  last_update_posted_date_type        String?                      @db.VarChar
+  start_month_year                    String?                      @db.VarChar
+  start_date_type                     String?                      @db.VarChar
+  start_date                          DateTime?                    @db.Date
+  verification_month_year             String?                      @db.VarChar
+  verification_date                   DateTime?                    @db.Date
+  completion_month_year               String?                      @db.VarChar
+  completion_date_type                String?                      @db.VarChar
+  completion_date                     DateTime?                    @db.Date
+  primary_completion_month_year       String?                      @db.VarChar
+  primary_completion_date_type        String?                      @db.VarChar
+  primary_completion_date             DateTime?                    @db.Date
+  target_duration                     String?                      @db.VarChar
+  study_type                          String?                      @db.VarChar
+  acronym                             String?                      @db.VarChar
+  baseline_population                 String?
+  brief_title                         String?
+  official_title                      String?
+  overall_status                      String?                      @db.VarChar
+  last_known_status                   String?                      @db.VarChar
+  phase                               String?                      @db.VarChar
+  enrollment                          Int?
+  enrollment_type                     String?                      @db.VarChar
+  source                              String?                      @db.VarChar
+  limitations_and_caveats             String?                      @db.VarChar
+  number_of_arms                      Int?
+  number_of_groups                    Int?
+  why_stopped                         String?                      @db.VarChar
+  has_expanded_access                 Boolean?
+  expanded_access_type_individual     Boolean?
+  expanded_access_type_intermediate   Boolean?
+  expanded_access_type_treatment      Boolean?
+  has_dmc                             Boolean?
+  is_fda_regulated_drug               Boolean?
+  is_fda_regulated_device             Boolean?
+  is_unapproved_device                Boolean?
+  is_ppsd                             Boolean?
+  is_us_export                        Boolean?
+  biospec_retention                   String?                      @db.VarChar
+  biospec_description                 String?
+  ipd_time_frame                      String?                      @db.VarChar
+  ipd_access_criteria                 String?                      @db.VarChar
+  ipd_url                             String?                      @db.VarChar
+  plan_to_share_ipd                   String?                      @db.VarChar
+  plan_to_share_ipd_description       String?                      @db.VarChar
+  created_at                          DateTime                     @db.Timestamp(6)
+  updated_at                          DateTime                     @db.Timestamp(6)
+  source_class                        String?                      @db.VarChar
+  delayed_posting                     String?                      @db.VarChar
+  expanded_access_nctid               String?                      @db.VarChar
+  expanded_access_status_for_nctid    String?                      @db.VarChar
+  fdaaa801_violation                  Boolean?
+  baseline_type_units_analyzed        String?                      @db.VarChar
+  baseline_counts                     baseline_counts[]
+  baseline_measurements               baseline_measurements[]
+  brief_summaries                     brief_summaries?
+  browse_conditions                   browse_conditions[]
+  browse_interventions                browse_interventions[]
+  calculated_values                   calculated_values?
+  central_contacts                    central_contacts[]
+  conditions                          conditions[]
+  countries                           countries[]
+  design_group_interventions          design_group_interventions[]
+  design_groups                       design_groups[]
+  design_outcomes                     design_outcomes[]
+  designs                             designs?
+  detailed_descriptions               detailed_descriptions?
+  documents                           documents[]
+  drop_withdrawals                    drop_withdrawals[]
+  eligibilities                       eligibilities?
+  facilities                          facilities[]
+  facility_contacts                   facility_contacts[]
+  facility_investigators              facility_investigators[]
+  id_information                      id_information[]
+  intervention_other_names            intervention_other_names[]
+  interventions                       interventions[]
+  ipd_information_types               ipd_information_types[]
+  keywords                            keywords[]
+  links                               links[]
+  milestones                          milestones[]
+  outcome_analyses                    outcome_analyses[]
+  outcome_analysis_groups             outcome_analysis_groups[]
+  outcome_counts                      outcome_counts[]
+  outcome_measurements                outcome_measurements[]
+  outcomes                            outcomes[]
+  overall_officials                   overall_officials[]
+  participant_flows                   participant_flows?
+  pending_results                     pending_results[]
+  provided_documents                  provided_documents[]
+  reported_event_totals               reported_event_totals[]
+  reported_events                     reported_events[]
+  responsible_parties                 responsible_parties[]
+  result_agreements                   result_agreements[]
+  result_contacts                     result_contacts[]
+  result_groups                       result_groups[]
+  retractions                         retractions[]
+  search_results                      search_results[]
+  sponsors                            sponsors[]
+  studies                             studies?                     @relation("studiesTostudies", fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction)
+  other_studies                       studies?                     @relation("studiesTostudies")
+  study_references                    study_references[]
+
+  @@index([disposition_first_submitted_date], map: "index_studies_on_disposition_first_submitted_date")
+  @@index([enrollment_type], map: "index_studies_on_enrollment_type")
+  @@index([last_known_status], map: "index_studies_on_last_known_status")
+  @@index([last_update_submitted_date], map: "index_studies_on_last_update_submitted_date")
+  @@index([last_update_submitted_qc_date], map: "index_studies_on_last_update_submitted_qc_date")
+  @@index([overall_status], map: "index_studies_on_overall_status")
+  @@index([phase], map: "index_studies_on_phase")
+  @@index([primary_completion_date_type], map: "index_studies_on_primary_completion_date_type")
+  @@index([results_first_submitted_date], map: "index_studies_on_results_first_submitted_date")
+  @@index([results_first_submitted_qc_date], map: "index_studies_on_results_first_submitted_qc_date")
+  @@index([source], map: "index_studies_on_source")
+  @@index([study_first_submitted_date], map: "index_studies_on_study_first_submitted_date")
+  @@index([study_first_submitted_qc_date], map: "index_studies_on_study_first_submitted_qc_date")
+  @@index([study_type], map: "index_studies_on_study_type")
+  @@index([nct_id], map: "studies_nct_idx")
+}

@@ -1,0 +1,962 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+model baseline_counts {
+  id               Int            @id @default(autoincrement())
+  nct_id           String?        @db.VarChar
+  result_group_id  Int?
+  ctgov_group_code String?        @db.VarChar
+  units            String?        @db.VarChar
+  scope            String?        @db.VarChar
+  count            Int?
+  studies          studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  result_groups    result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "baseline_counts_nct_idx")
+  @@index([nct_id], map: "index_baseline_counts_on_nct_id")
+}
+
+model baseline_measurements {
+  id                     Int            @id @default(autoincrement())
+  nct_id                 String?        @db.VarChar
+  result_group_id        Int?
+  ctgov_group_code       String?        @db.VarChar
+  classification         String?        @db.VarChar
+  category               String?        @db.VarChar
+  title                  String?        @db.VarChar
+  description            String?
+  units                  String?        @db.VarChar
+  param_type             String?        @db.VarChar
+  param_value            String?        @db.VarChar
+  param_value_num        Decimal?       @db.Decimal
+  dispersion_type        String?        @db.VarChar
+  dispersion_value       String?        @db.VarChar
+  dispersion_value_num   Decimal?       @db.Decimal
+  dispersion_lower_limit Decimal?       @db.Decimal
+  dispersion_upper_limit Decimal?       @db.Decimal
+  explanation_of_na      String?        @db.VarChar
+  number_analyzed        Int?
+  number_analyzed_units  String?        @db.VarChar
+  population_description String?        @db.VarChar
+  calculate_percentage   String?        @db.VarChar
+  studies                studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  result_groups          result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "baseline_measurements_nct_idx")
+  @@index([category], map: "index_baseline_measurements_on_category")
+  @@index([classification], map: "index_baseline_measurements_on_classification")
+  @@index([dispersion_type], map: "index_baseline_measurements_on_dispersion_type")
+  @@index([nct_id], map: "index_baseline_measurements_on_nct_id")
+  @@index([param_type], map: "index_baseline_measurements_on_param_type")
+}
+
+model brief_summaries {
+  id          Int      @id @default(autoincrement())
+  nct_id      String?  @unique(map: "index_brief_summaries_on_nct_id") @db.VarChar
+  description String?
+  studies     studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "brief_summaries_nct_idx")
+}
+
+model browse_conditions {
+  id                 Int      @id @default(autoincrement())
+  nct_id             String?  @db.VarChar
+  mesh_term          String?  @db.VarChar
+  downcase_mesh_term String?  @db.VarChar
+  mesh_type          String?  @db.VarChar
+  studies            studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "browse_conditions_nct_idx")
+  @@index([downcase_mesh_term], map: "index_browse_conditions_on_downcase_mesh_term")
+  @@index([mesh_term], map: "index_browse_conditions_on_mesh_term")
+  @@index([nct_id], map: "index_browse_conditions_on_nct_id")
+}
+
+model browse_interventions {
+  id                 Int      @id @default(autoincrement())
+  nct_id             String?  @db.VarChar
+  mesh_term          String?  @db.VarChar
+  downcase_mesh_term String?  @db.VarChar
+  mesh_type          String?  @db.VarChar
+  studies            studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "browse_interventions_nct_idx")
+  @@index([downcase_mesh_term], map: "index_browse_interventions_on_downcase_mesh_term")
+  @@index([mesh_term], map: "index_browse_interventions_on_mesh_term")
+  @@index([nct_id], map: "index_browse_interventions_on_nct_id")
+}
+
+model calculated_values {
+  id                                      Int       @id @default(autoincrement())
+  nct_id                                  String?   @unique(map: "index_calculated_values_on_nct_id") @db.VarChar
+  number_of_facilities                    Int?
+  number_of_nsae_subjects                 Int?
+  number_of_sae_subjects                  Int?
+  registered_in_calendar_year             Int?
+  nlm_download_date                       DateTime? @db.Date
+  actual_duration                         Int?
+  were_results_reported                   Boolean?  @default(false)
+  months_to_report_results                Int?
+  has_us_facility                         Boolean?
+  has_single_facility                     Boolean?  @default(false)
+  minimum_age_num                         Int?
+  maximum_age_num                         Int?
+  minimum_age_unit                        String?   @db.VarChar
+  maximum_age_unit                        String?   @db.VarChar
+  number_of_primary_outcomes_to_measure   Int?
+  number_of_secondary_outcomes_to_measure Int?
+  number_of_other_outcomes_to_measure     Int?
+  studies                                 studies?  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "calculated_values_nct_idx")
+  @@index([actual_duration], map: "index_calculated_values_on_actual_duration")
+  @@index([months_to_report_results], map: "index_calculated_values_on_months_to_report_results")
+  @@index([number_of_facilities], map: "index_calculated_values_on_number_of_facilities")
+}
+
+model central_contacts {
+  id              Int      @id @default(autoincrement())
+  nct_id          String?  @db.VarChar
+  contact_type    String?  @db.VarChar
+  name            String?  @db.VarChar
+  phone           String?  @db.VarChar
+  email           String?  @db.VarChar
+  phone_extension String?  @db.VarChar
+  role            String?  @db.VarChar
+  studies         studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "central_contacts_nct_idx")
+  @@index([contact_type], map: "index_central_contacts_on_contact_type")
+  @@index([nct_id], map: "index_central_contacts_on_nct_id")
+}
+
+model conditions {
+  id            Int      @id @default(autoincrement())
+  nct_id        String?  @db.VarChar
+  name          String?  @db.VarChar
+  downcase_name String?  @db.VarChar
+  studies       studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "conditions_nct_idx")
+  @@index([downcase_name], map: "index_conditions_on_downcase_name")
+  @@index([name], map: "index_conditions_on_name")
+  @@index([nct_id], map: "index_conditions_on_nct_id")
+}
+
+model countries {
+  id      Int      @id @default(autoincrement())
+  nct_id  String?  @db.VarChar
+  name    String?  @db.VarChar
+  removed Boolean?
+  studies studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "countries_nct_idx")
+  @@index([nct_id], map: "index_countries_on_nct_id")
+}
+
+model design_group_interventions {
+  id              Int            @id @default(autoincrement())
+  nct_id          String?        @db.VarChar
+  design_group_id Int?
+  intervention_id Int?
+  design_groups   design_groups? @relation(fields: [design_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  interventions   interventions? @relation(fields: [intervention_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studies         studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "design_group_interventions_nct_idx")
+  @@index([design_group_id], map: "index_design_group_interventions_on_design_group_id")
+  @@index([intervention_id], map: "index_design_group_interventions_on_intervention_id")
+  @@index([nct_id], map: "index_design_group_interventions_on_nct_id")
+}
+
+model design_groups {
+  id                         Int                          @id @default(autoincrement())
+  nct_id                     String?                      @db.VarChar
+  group_type                 String?                      @db.VarChar
+  title                      String?                      @db.VarChar
+  description                String?
+  design_group_interventions design_group_interventions[]
+  studies                    studies?                     @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "design_groups_nct_idx")
+  @@index([group_type], map: "index_design_groups_on_group_type")
+  @@index([nct_id], map: "index_design_groups_on_nct_id")
+}
+
+model design_outcomes {
+  id           Int      @id @default(autoincrement())
+  nct_id       String?  @db.VarChar
+  outcome_type String?  @db.VarChar
+  measure      String?
+  time_frame   String?
+  population   String?  @db.VarChar
+  description  String?
+  studies      studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "design_outcomes_nct_idx")
+  @@index([measure], map: "index_design_outcomes_on_measure")
+  @@index([nct_id], map: "index_design_outcomes_on_nct_id")
+  @@index([outcome_type], map: "index_design_outcomes_on_outcome_type")
+}
+
+model designs {
+  id                             Int      @id @default(autoincrement())
+  nct_id                         String?  @unique(map: "index_designs_on_nct_id") @db.VarChar
+  allocation                     String?  @db.VarChar
+  intervention_model             String?  @db.VarChar
+  observational_model            String?  @db.VarChar
+  primary_purpose                String?  @db.VarChar
+  time_perspective               String?  @db.VarChar
+  masking                        String?  @db.VarChar
+  masking_description            String?
+  intervention_model_description String?
+  subject_masked                 Boolean?
+  caregiver_masked               Boolean?
+  investigator_masked            Boolean?
+  outcomes_assessor_masked       Boolean?
+  studies                        studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "designs_nct_idx")
+  @@index([caregiver_masked], map: "index_designs_on_caregiver_masked")
+  @@index([investigator_masked], map: "index_designs_on_investigator_masked")
+  @@index([masking], map: "index_designs_on_masking")
+  @@index([outcomes_assessor_masked], map: "index_designs_on_outcomes_assessor_masked")
+  @@index([subject_masked], map: "index_designs_on_subject_masked")
+}
+
+model detailed_descriptions {
+  id          Int      @id @default(autoincrement())
+  nct_id      String?  @unique(map: "index_detailed_descriptions_on_nct_id") @db.VarChar
+  description String?
+  studies     studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "detailed_descriptions_nct_idx")
+}
+
+model documents {
+  id            Int      @id @default(autoincrement())
+  nct_id        String?  @db.VarChar
+  document_id   String?  @db.VarChar
+  document_type String?  @db.VarChar
+  url           String?  @db.VarChar
+  comment       String?
+  studies       studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "documents_nct_idx")
+  @@index([document_id], map: "index_documents_on_document_id")
+  @@index([document_type], map: "index_documents_on_document_type")
+  @@index([nct_id], map: "index_documents_on_nct_id")
+}
+
+model drop_withdrawals {
+  id                    Int            @id @default(autoincrement())
+  nct_id                String?        @db.VarChar
+  result_group_id       Int?
+  ctgov_group_code      String?        @db.VarChar
+  period                String?        @db.VarChar
+  reason                String?        @db.VarChar
+  count                 Int?
+  drop_withdraw_comment String?        @db.VarChar
+  reason_comment        String?        @db.VarChar
+  count_units           Int?
+  studies               studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  result_groups         result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "drop_withdrawals_nct_idx")
+  @@index([nct_id], map: "index_drop_withdrawals_on_nct_id")
+  @@index([period], map: "index_drop_withdrawals_on_period")
+}
+
+model eligibilities {
+  id                 Int      @id @default(autoincrement())
+  nct_id             String?  @unique(map: "index_eligibilities_on_nct_id") @db.VarChar
+  sampling_method    String?  @db.VarChar
+  gender             String?  @db.VarChar
+  minimum_age        String?  @db.VarChar
+  maximum_age        String?  @db.VarChar
+  healthy_volunteers String?  @db.VarChar
+  population         String?
+  criteria           String?
+  gender_description String?
+  gender_based       Boolean?
+  adult              Boolean?
+  child              Boolean?
+  older_adult        Boolean?
+  studies            studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "eligibilities_nct_idx")
+  @@index([gender], map: "index_eligibilities_on_gender")
+  @@index([healthy_volunteers], map: "index_eligibilities_on_healthy_volunteers")
+  @@index([maximum_age], map: "index_eligibilities_on_maximum_age")
+  @@index([minimum_age], map: "index_eligibilities_on_minimum_age")
+}
+
+model facilities {
+  id                     Int                      @id @default(autoincrement())
+  nct_id                 String?                  @db.VarChar
+  status                 String?                  @db.VarChar
+  name                   String?                  @db.VarChar
+  city                   String?                  @db.VarChar
+  state                  String?                  @db.VarChar
+  zip                    String?                  @db.VarChar
+  country                String?                  @db.VarChar
+  studies                studies?                 @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  facility_contacts      facility_contacts[]
+  facility_investigators facility_investigators[]
+
+  @@index([nct_id], map: "facilities_nct_idx")
+  @@index([city], map: "index_facilities_on_city")
+  @@index([country], map: "index_facilities_on_country")
+  @@index([name], map: "index_facilities_on_name")
+  @@index([nct_id], map: "index_facilities_on_nct_id")
+  @@index([state], map: "index_facilities_on_state")
+  @@index([status], map: "index_facilities_on_status")
+}
+
+model facility_contacts {
+  id              Int         @id @default(autoincrement())
+  nct_id          String?     @db.VarChar
+  facility_id     Int?
+  contact_type    String?     @db.VarChar
+  name            String?     @db.VarChar
+  email           String?     @db.VarChar
+  phone           String?     @db.VarChar
+  phone_extension String?     @db.VarChar
+  facilities      facilities? @relation(fields: [facility_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studies         studies?    @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "facility_contacts_nct_idx")
+  @@index([contact_type], map: "index_facility_contacts_on_contact_type")
+  @@index([nct_id], map: "index_facility_contacts_on_nct_id")
+}
+
+model facility_investigators {
+  id          Int         @id @default(autoincrement())
+  nct_id      String?     @db.VarChar
+  facility_id Int?
+  role        String?     @db.VarChar
+  name        String?     @db.VarChar
+  facilities  facilities? @relation(fields: [facility_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studies     studies?    @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "facility_investigators_nct_idx")
+  @@index([nct_id], map: "index_facility_investigators_on_nct_id")
+}
+
+model id_information {
+  id                  Int      @id @default(autoincrement())
+  nct_id              String?  @db.VarChar
+  id_source           String?  @db.VarChar
+  id_value            String?  @db.VarChar
+  id_type             String?  @db.VarChar
+  id_type_description String?  @db.VarChar
+  id_link             String?  @db.VarChar
+  studies             studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "id_information_nct_idx")
+  @@index([id_type], map: "index_id_information_on_id_type")
+  @@index([nct_id], map: "index_id_information_on_nct_id")
+}
+
+model intervention_other_names {
+  id              Int            @id @default(autoincrement())
+  nct_id          String?        @db.VarChar
+  intervention_id Int?
+  name            String?        @db.VarChar
+  interventions   interventions? @relation(fields: [intervention_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  studies         studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_intervention_other_names_on_nct_id")
+  @@index([nct_id], map: "intervention_other_names_nct_idx")
+}
+
+model interventions {
+  id                         Int                          @id @default(autoincrement())
+  nct_id                     String?                      @db.VarChar
+  intervention_type          String?                      @db.VarChar
+  name                       String?                      @db.VarChar
+  description                String?
+  design_group_interventions design_group_interventions[]
+  intervention_other_names   intervention_other_names[]
+  studies                    studies?                     @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([intervention_type], map: "index_interventions_on_intervention_type")
+  @@index([nct_id], map: "index_interventions_on_nct_id")
+  @@index([nct_id], map: "interventions_nct_idx")
+}
+
+model ipd_information_types {
+  id      Int      @id @default(autoincrement())
+  nct_id  String?  @db.VarChar
+  name    String?  @db.VarChar
+  studies studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_ipd_information_types_on_nct_id")
+  @@index([nct_id], map: "ipd_information_types_nct_idx")
+}
+
+model keywords {
+  id            Int      @id @default(autoincrement())
+  nct_id        String?  @db.VarChar
+  name          String?  @db.VarChar
+  downcase_name String?  @db.VarChar
+  studies       studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([downcase_name], map: "index_keywords_on_downcase_name")
+  @@index([name], map: "index_keywords_on_name")
+  @@index([nct_id], map: "index_keywords_on_nct_id")
+  @@index([nct_id], map: "keywords_nct_idx")
+}
+
+model links {
+  id          Int      @id @default(autoincrement())
+  nct_id      String?  @db.VarChar
+  url         String?  @db.VarChar
+  description String?
+  studies     studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_links_on_nct_id")
+  @@index([nct_id], map: "links_nct_idx")
+}
+
+model mesh_headings {
+  id          Int     @id @default(autoincrement())
+  qualifier   String? @db.VarChar
+  heading     String? @db.VarChar
+  subcategory String? @db.VarChar
+
+  @@index([qualifier], map: "index_mesh_headings_on_qualifier")
+}
+
+model mesh_terms {
+  id                 Int     @id @default(autoincrement())
+  qualifier          String? @db.VarChar
+  tree_number        String? @db.VarChar
+  description        String? @db.VarChar
+  mesh_term          String? @db.VarChar
+  downcase_mesh_term String? @db.VarChar
+
+  @@index([description], map: "index_mesh_terms_on_description")
+  @@index([downcase_mesh_term], map: "index_mesh_terms_on_downcase_mesh_term")
+  @@index([mesh_term], map: "index_mesh_terms_on_mesh_term")
+  @@index([qualifier], map: "index_mesh_terms_on_qualifier")
+}
+
+model milestones {
+  id                    Int            @id @default(autoincrement())
+  nct_id                String?        @db.VarChar
+  result_group_id       Int?
+  ctgov_group_code      String?        @db.VarChar
+  title                 String?        @db.VarChar
+  period                String?        @db.VarChar
+  description           String?
+  count                 Int?
+  milestone_description String?        @db.VarChar
+  count_units           String?        @db.VarChar
+  studies               studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  result_groups         result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "index_milestones_on_nct_id")
+  @@index([period], map: "index_milestones_on_period")
+  @@index([nct_id], map: "milestones_nct_idx")
+}
+
+model outcome_analyses {
+  id                          Int                       @id @default(autoincrement())
+  nct_id                      String?                   @db.VarChar
+  outcome_id                  Int?
+  non_inferiority_type        String?                   @db.VarChar
+  non_inferiority_description String?
+  param_type                  String?                   @db.VarChar
+  param_value                 Decimal?                  @db.Decimal
+  dispersion_type             String?                   @db.VarChar
+  dispersion_value            Decimal?                  @db.Decimal
+  p_value_modifier            String?                   @db.VarChar
+  p_value                     Float?
+  ci_n_sides                  String?                   @db.VarChar
+  ci_percent                  Decimal?                  @db.Decimal
+  ci_lower_limit              Decimal?                  @db.Decimal
+  ci_upper_limit              Decimal?                  @db.Decimal
+  ci_upper_limit_na_comment   String?                   @db.VarChar
+  p_value_description         String?                   @db.VarChar
+  method                      String?                   @db.VarChar
+  method_description          String?
+  estimate_description        String?
+  groups_description          String?
+  other_analysis_description  String?
+  ci_upper_limit_raw          String?                   @db.VarChar
+  ci_lower_limit_raw          String?                   @db.VarChar
+  p_value_raw                 String?                   @db.VarChar
+  studies                     studies?                  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  outcomes                    outcomes?                 @relation(fields: [outcome_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  outcome_analysis_groups     outcome_analysis_groups[]
+
+  @@index([dispersion_type], map: "index_outcome_analyses_on_dispersion_type")
+  @@index([nct_id], map: "index_outcome_analyses_on_nct_id")
+  @@index([param_type], map: "index_outcome_analyses_on_param_type")
+  @@index([nct_id], map: "outcome_analyses_nct_idx")
+}
+
+model outcome_analysis_groups {
+  id                  Int               @id @default(autoincrement())
+  nct_id              String?           @db.VarChar
+  outcome_analysis_id Int?
+  result_group_id     Int?
+  ctgov_group_code    String?           @db.VarChar
+  studies             studies?          @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  outcome_analyses    outcome_analyses? @relation(fields: [outcome_analysis_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  result_groups       result_groups?    @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "index_outcome_analysis_groups_on_nct_id")
+  @@index([nct_id], map: "outcome_analysis_groups_nct_idx")
+}
+
+model outcome_counts {
+  id               Int            @id @default(autoincrement())
+  nct_id           String?        @db.VarChar
+  outcome_id       Int?
+  result_group_id  Int?
+  ctgov_group_code String?        @db.VarChar
+  scope            String?        @db.VarChar
+  units            String?        @db.VarChar
+  count            Int?
+  studies          studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  outcomes         outcomes?      @relation(fields: [outcome_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  result_groups    result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([nct_id], map: "index_outcome_counts_on_nct_id")
+  @@index([nct_id], map: "outcome_counts_nct_idx")
+}
+
+model outcome_measurements {
+  id                         Int            @id @default(autoincrement())
+  nct_id                     String?        @db.VarChar
+  outcome_id                 Int?
+  result_group_id            Int?
+  ctgov_group_code           String?        @db.VarChar
+  classification             String?        @db.VarChar
+  category                   String?        @db.VarChar
+  title                      String?        @db.VarChar
+  description                String?
+  units                      String?        @db.VarChar
+  param_type                 String?        @db.VarChar
+  param_value                String?        @db.VarChar
+  param_value_num            Decimal?       @db.Decimal
+  dispersion_type            String?        @db.VarChar
+  dispersion_value           String?        @db.VarChar
+  dispersion_value_num       Decimal?       @db.Decimal
+  dispersion_lower_limit     Decimal?       @db.Decimal
+  dispersion_upper_limit     Decimal?       @db.Decimal
+  explanation_of_na          String?
+  dispersion_upper_limit_raw String?        @db.VarChar
+  dispersion_lower_limit_raw String?        @db.VarChar
+  studies                    studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  outcomes                   outcomes?      @relation(fields: [outcome_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  result_groups              result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([category], map: "index_outcome_measurements_on_category")
+  @@index([classification], map: "index_outcome_measurements_on_classification")
+  @@index([dispersion_type], map: "index_outcome_measurements_on_dispersion_type")
+  @@index([nct_id], map: "index_outcome_measurements_on_nct_id")
+  @@index([nct_id], map: "outcome_measurements_nct_idx")
+}
+
+model outcomes {
+  id                             Int                    @id @default(autoincrement())
+  nct_id                         String?                @db.VarChar
+  outcome_type                   String?                @db.VarChar
+  title                          String?
+  description                    String?
+  time_frame                     String?
+  population                     String?
+  anticipated_posting_date       DateTime?              @db.Date
+  anticipated_posting_month_year String?                @db.VarChar
+  units                          String?                @db.VarChar
+  units_analyzed                 String?                @db.VarChar
+  dispersion_type                String?                @db.VarChar
+  param_type                     String?                @db.VarChar
+  outcome_analyses               outcome_analyses[]
+  outcome_counts                 outcome_counts[]
+  outcome_measurements           outcome_measurements[]
+  studies                        studies?               @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([dispersion_type], map: "index_outcomes_on_dispersion_type")
+  @@index([nct_id], map: "index_outcomes_on_nct_id")
+  @@index([param_type], map: "index_outcomes_on_param_type")
+  @@index([nct_id], map: "outcomes_nct_idx")
+}
+
+model overall_officials {
+  id          Int      @id @default(autoincrement())
+  nct_id      String?  @db.VarChar
+  role        String?  @db.VarChar
+  name        String?  @db.VarChar
+  affiliation String?  @db.VarChar
+  studies     studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([affiliation], map: "index_overall_officials_on_affiliation")
+  @@index([nct_id], map: "index_overall_officials_on_nct_id")
+  @@index([nct_id], map: "overall_officials_nct_idx")
+}
+
+model participant_flows {
+  id                     Int      @id @default(autoincrement())
+  nct_id                 String?  @unique(map: "index_participant_flows_on_nct_id") @db.VarChar
+  recruitment_details    String?
+  pre_assignment_details String?
+  units_analyzed         String?  @db.VarChar
+  drop_withdraw_comment  String?  @db.VarChar
+  reason_comment         String?  @db.VarChar
+  count_units            Int?
+  studies                studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "participant_flows_nct_idx")
+}
+
+model pending_results {
+  id                     Int       @id @default(autoincrement())
+  nct_id                 String?   @db.VarChar
+  event                  String?   @db.VarChar
+  event_date_description String?   @db.VarChar
+  event_date             DateTime? @db.Date
+  studies                studies?  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_pending_results_on_nct_id")
+  @@index([nct_id], map: "pending_results_nct_idx")
+}
+
+model provided_documents {
+  id            Int       @id @default(autoincrement())
+  nct_id        String?   @db.VarChar
+  document_type String?   @db.VarChar
+  has_protocol  Boolean?
+  has_icf       Boolean?
+  has_sap       Boolean?
+  document_date DateTime? @db.Date
+  url           String?   @db.VarChar
+  studies       studies?  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_provided_documents_on_nct_id")
+  @@index([nct_id], map: "provided_documents_nct_idx")
+}
+
+model reported_event_totals {
+  id                Int      @id @default(autoincrement())
+  nct_id            String   @db.VarChar
+  ctgov_group_code  String   @db.VarChar
+  event_type        String?  @db.VarChar
+  classification    String   @db.VarChar
+  subjects_affected Int?
+  subjects_at_risk  Int?
+  created_at        DateTime @db.Timestamp(6)
+  updated_at        DateTime @db.Timestamp(6)
+  studies           studies  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_reported_event_totals_on_nct_id")
+  @@index([nct_id], map: "reported_event_totals_nct_idx")
+}
+
+model reported_events {
+  id                  Int            @id @default(autoincrement())
+  nct_id              String?        @db.VarChar
+  result_group_id     Int?
+  ctgov_group_code    String?        @db.VarChar
+  time_frame          String?
+  event_type          String?        @db.VarChar
+  default_vocab       String?        @db.VarChar
+  default_assessment  String?        @db.VarChar
+  subjects_affected   Int?
+  subjects_at_risk    Int?
+  description         String?
+  event_count         Int?
+  organ_system        String?        @db.VarChar
+  adverse_event_term  String?        @db.VarChar
+  frequency_threshold Int?
+  vocab               String?        @db.VarChar
+  assessment          String?        @db.VarChar
+  studies             studies?       @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+  result_groups       result_groups? @relation(fields: [result_group_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([event_type], map: "index_reported_events_on_event_type")
+  @@index([nct_id], map: "index_reported_events_on_nct_id")
+  @@index([subjects_affected], map: "index_reported_events_on_subjects_affected")
+  @@index([nct_id], map: "reported_events_nct_idx")
+}
+
+model responsible_parties {
+  id                     Int      @id @default(autoincrement())
+  nct_id                 String?  @db.VarChar
+  responsible_party_type String?  @db.VarChar
+  name                   String?  @db.VarChar
+  title                  String?  @db.VarChar
+  organization           String?  @db.VarChar
+  affiliation            String?
+  old_name_title         String?  @db.VarChar
+  studies                studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_responsible_parties_on_nct_id")
+  @@index([organization], map: "index_responsible_parties_on_organization")
+  @@index([responsible_party_type], map: "index_responsible_parties_on_responsible_party_type")
+  @@index([nct_id], map: "responsible_parties_nct_idx")
+}
+
+model result_agreements {
+  id                    Int      @id @default(autoincrement())
+  nct_id                String?  @db.VarChar
+  pi_employee           String?  @db.VarChar
+  agreement             String?
+  restriction_type      String?  @db.VarChar
+  other_details         String?
+  restrictive_agreement String?  @db.VarChar
+  studies               studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_result_agreements_on_nct_id")
+  @@index([nct_id], map: "result_agreements_nct_idx")
+}
+
+model result_contacts {
+  id           Int      @id @default(autoincrement())
+  nct_id       String?  @db.VarChar
+  organization String?  @db.VarChar
+  name         String?  @db.VarChar
+  phone        String?  @db.VarChar
+  email        String?  @db.VarChar
+  extension    String?  @db.VarChar
+  studies      studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_result_contacts_on_nct_id")
+  @@index([organization], map: "index_result_contacts_on_organization")
+  @@index([nct_id], map: "result_contacts_nct_idx")
+}
+
+model result_groups {
+  id                      Int                       @id @default(autoincrement())
+  nct_id                  String?                   @db.VarChar
+  ctgov_group_code        String?                   @db.VarChar
+  result_type             String?                   @db.VarChar
+  title                   String?                   @db.VarChar
+  description             String?
+  baseline_counts         baseline_counts[]
+  baseline_measurements   baseline_measurements[]
+  drop_withdrawals        drop_withdrawals[]
+  milestones              milestones[]
+  outcome_analysis_groups outcome_analysis_groups[]
+  outcome_counts          outcome_counts[]
+  outcome_measurements    outcome_measurements[]
+  reported_events         reported_events[]
+  studies                 studies?                  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_result_groups_on_nct_id")
+  @@index([result_type], map: "index_result_groups_on_result_type")
+  @@index([nct_id], map: "result_groups_nct_idx")
+}
+
+model retractions {
+  id           BigInt   @id @default(autoincrement())
+  reference_id Int?
+  pmid         String?  @db.VarChar
+  source       String?  @db.VarChar
+  nct_id       String?  @db.VarChar
+  studies      studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_retractions_on_nct_id")
+}
+
+model search_results {
+  id              Int      @id @default(autoincrement())
+  nct_id          String   @db.VarChar
+  name            String   @db.VarChar
+  created_at      DateTime @db.Timestamp(6)
+  updated_at      DateTime @db.Timestamp(6)
+  grouping        String   @default("") @db.VarChar
+  study_search_id Int?
+  studies         studies  @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "categories_nct_idx")
+  @@index([nct_id], map: "index_search_results_on_nct_id")
+}
+
+model sponsors {
+  id                   Int      @id @default(autoincrement())
+  nct_id               String?  @db.VarChar
+  agency_class         String?  @db.VarChar
+  lead_or_collaborator String?  @db.VarChar
+  name                 String?  @db.VarChar
+  studies              studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([agency_class], map: "index_sponsors_on_agency_class")
+  @@index([name], map: "index_sponsors_on_name")
+  @@index([nct_id], map: "index_sponsors_on_nct_id")
+  @@index([nct_id], map: "sponsors_nct_idx")
+}
+
+
+model studies {
+  nct_id                              String                      @id @unique(map: "index   on_nct_id") @db.VarChar
+  nlm_download_date_description       String?                      @db.VarChar
+  study_first_submitted_date          DateTime?                    @db.Date
+  results_first_submitted_date        DateTime?                    @db.Date
+  disposition_first_submitted_date    DateTime?                    @db.Date
+  last_update_submitted_date          DateTime?                    @db.Date
+  study_first_submitted_qc_date       DateTime?                    @db.Date
+  study_first_posted_date             DateTime?                    @db.Date
+  study_first_posted_date_type        String?                      @db.VarChar
+  results_first_submitted_qc_date     DateTime?                    @db.Date
+  results_first_posted_date           DateTime?                    @db.Date
+  results_first_posted_date_type      String?                      @db.VarChar
+  disposition_first_submitted_qc_date DateTime?                    @db.Date
+  disposition_first_posted_date       DateTime?                    @db.Date
+  disposition_first_posted_date_type  String?                      @db.VarChar
+  last_update_submitted_qc_date       DateTime?                    @db.Date
+  last_update_posted_date             DateTime?                    @db.Date
+  last_update_posted_date_type        String?                      @db.VarChar
+  start_month_year                    String?                      @db.VarChar
+  start_date_type                     String?                      @db.VarChar
+  start_date                          DateTime?                    @db.Date
+  verification_month_year             String?                      @db.VarChar
+  verification_date                   DateTime?                    @db.Date
+  completion_month_year               String?                      @db.VarChar
+  completion_date_type                String?                      @db.VarChar
+  completion_date                     DateTime?                    @db.Date
+  primary_completion_month_year       String?                      @db.VarChar
+  primary_completion_date_type        String?                      @db.VarChar
+  primary_completion_date             DateTime?                    @db.Date
+  target_duration                     String?                      @db.VarChar
+  study_type                          String?                      @db.VarChar
+  acronym                             String?                      @db.VarChar
+  baseline_population                 String?
+  brief_title                         String?
+  official_title                      String?
+  overall_status                      String?                      @db.VarChar
+  last_known_status                   String?                      @db.VarChar
+  phase                               String?                      @db.VarChar
+  enrollment                          Int?
+  enrollment_type                     String?                      @db.VarChar
+  source                              String?                      @db.VarChar
+  limitations_and_caveats             String?                      @db.VarChar
+  number_of_arms                      Int?
+  number_of_groups                    Int?
+  why_stopped                         String?                      @db.VarChar
+  has_expanded_access                 Boolean?
+  expanded_access_type_individual     Boolean?
+  expanded_access_type_intermediate   Boolean?
+  expanded_access_type_treatment      Boolean?
+  has_dmc                             Boolean?
+  is_fda_regulated_drug               Boolean?
+  is_fda_regulated_device             Boolean?
+  is_unapproved_device                Boolean?
+  is_ppsd                             Boolean?
+  is_us_export                        Boolean?
+  biospec_retention                   String?                      @db.VarChar
+  biospec_description                 String?
+  ipd_time_frame                      String?                      @db.VarChar
+  ipd_access_criteria                 String?                      @db.VarChar
+  ipd_url                             String?                      @db.VarChar
+  plan_to_share_ipd                   String?                      @db.VarChar
+  plan_to_share_ipd_description       String?                      @db.VarChar
+  created_at                          DateTime                     @db.Timestamp(6)
+  updated_at                          DateTime                     @db.Timestamp(6)
+  source_class                        String?                      @db.VarChar
+  delayed_posting                     String?                      @db.VarChar
+  expanded_access_nctid               String?                      @db.VarChar
+  expanded_access_status_for_nctid    String?                      @db.VarChar
+  fdaaa801_violation                  Boolean?
+  baseline_type_units_analyzed        String?                      @db.VarChar
+  baseline_counts                     baseline_counts[]
+  baseline_measurements               baseline_measurements[]
+  brief_summaries                     brief_summaries?
+  browse_conditions                   browse_conditions[]
+  browse_interventions                browse_interventions[]
+  calculated_values                   calculated_values?
+  central_contacts                    central_contacts[]
+  conditions                          conditions[]
+  countries                           countries[]
+  design_group_interventions          design_group_interventions[]
+  design_groups                       design_groups[]
+  design_outcomes                     design_outcomes[]
+  designs                             designs?
+  detailed_descriptions               detailed_descriptions?
+  documents                           documents[]
+  drop_withdrawals                    drop_withdrawals[]
+  eligibilities                       eligibilities?
+  facilities                          facilities[]
+  facility_contacts                   facility_contacts[]
+  facility_investigators              facility_investigators[]
+  id_information                      id_information[]
+  intervention_other_names            intervention_other_names[]
+  interventions                       interventions[]
+  ipd_information_types               ipd_information_types[]
+  keywords                            keywords[]
+  links                               links[]
+  milestones                          milestones[]
+  outcome_analyses                    outcome_analyses[]
+  outcome_analysis_groups             outcome_analysis_groups[]
+  outcome_counts                      outcome_counts[]
+  outcome_measurements                outcome_measurements[]
+  outcomes                            outcomes[]
+  overall_officials                   overall_officials[]
+  participant_flows                   participant_flows?
+  pending_results                     pending_results[]
+  provided_documents                  provided_documents[]
+  reported_event_totals               reported_event_totals[]
+  reported_events                     reported_events[]
+  responsible_parties                 responsible_parties[]
+  result_agreements                   result_agreements[]
+  result_contacts                     result_contacts[]
+  result_groups                       result_groups[]
+  retractions                         retractions[]
+  search_results                      search_results[]
+  sponsors                            sponsors[]
+  studies                             studies?                     @relation("studiesTostudies", fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction)
+  other_studies                       studies?                     @relation("studiesTostudies")
+  study_references                    study_references[]
+
+  @@index([disposition_first_submitted_date], map: "index_studies_on_disposition_first_submitted_date")
+  @@index([enrollment_type], map: "index_studies_on_enrollment_type")
+  @@index([last_known_status], map: "index_studies_on_last_known_status")
+  @@index([last_update_submitted_date], map: "index_studies_on_last_update_submitted_date")
+  @@index([last_update_submitted_qc_date], map: "index_studies_on_last_update_submitted_qc_date")
+  @@index([overall_status], map: "index_studies_on_overall_status")
+  @@index([phase], map: "index_studies_on_phase")
+  @@index([primary_completion_date_type], map: "index_studies_on_primary_completion_date_type")
+  @@index([results_first_submitted_date], map: "index_studies_on_results_first_submitted_date")
+  @@index([results_first_submitted_qc_date], map: "index_studies_on_results_first_submitted_qc_date")
+  @@index([source], map: "index_studies_on_source")
+  @@index([study_first_submitted_date], map: "index_studies_on_study_first_submitted_date")
+  @@index([study_first_submitted_qc_date], map: "index_studies_on_study_first_submitted_qc_date")
+  @@index([study_type], map: "index_studies_on_study_type")
+  @@index([nct_id], map: "studies_nct_idx")
+}
+
+model study_references {
+  id             Int      @id @default(autoincrement())
+  nct_id         String?  @db.VarChar
+  pmid           String?  @db.VarChar
+  reference_type String?  @db.VarChar
+  citation       String?
+  studies        studies? @relation(fields: [nct_id], references: [nct_id], onDelete: NoAction, onUpdate: NoAction) 
+
+  @@index([nct_id], map: "index_study_references_on_nct_id")
+  @@index([pmid], map: "index_study_references_on_pmid")
+  @@index([reference_type], map: "index_study_references_on_reference_type")
+  @@index([nct_id], map: "study_references_nct_idx")
+}
+
+model study_searches {
+  id         Int      @id @default(autoincrement())
+  save_tsv   Boolean  @default(false)
+  query      String   @db.VarChar
+  grouping   String   @default("") @db.VarChar
+  name       String   @default("") @db.VarChar
+  beta_api   Boolean  @default(false)
+  created_at DateTime @db.Timestamp(6)
+  updated_at DateTime @db.Timestamp(6)
+  active     Boolean?
+}
