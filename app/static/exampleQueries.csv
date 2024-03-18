@@ -1,0 +1,2 @@
+Prompt,Query
+Find the newest 300 cancer trials with vaccine interventions., SELECT * FROM studies s JOIN interventions i ON s.nct_id = i.nct_id WHERE i.description ILIKE '%Vaccine%' AND s.official_title ILIKE '%cancer%' ORDER BY s.last_update_posted_date DESC LIMIT 300;
