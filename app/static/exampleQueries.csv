@@ -1,2 +1,8 @@
-Prompt,Query
-Find the newest 300 cancer trials with vaccine interventions., SELECT * FROM studies s JOIN interventions i ON s.nct_id = i.nct_id WHERE i.description ILIKE '%Vaccine%' AND s.official_title ILIKE '%cancer%' ORDER BY s.last_update_posted_date DESC LIMIT 300;
+prompt,query
+"Find the 300 newest cancer trials with vaccine interventions.","SELECT * FROM studies s JOIN interventions i ON s.nct_id = i.nct_id WHERE i.description ILIKE '%Vaccine%' AND s.official_title ILIKE '%cancer%' ORDER BY s.start_date DESC LIMIT 300;"
+"Find the 200 oldest studies on covid-19 vaccines.","SELECT * FROM studies s JOIN interventions i ON s.nct_id = i.nct_id WHERE i.description ILIKE '%covid-19%' AND i.description ILIKE '%vaccine%' ORDER BY s.start_date ASC LIMIT 200;"
+"Retrieve the 100 newest vaccine interventions", "SELECT * FROM interventions i JOIN studies s ON s.nct_id = i.nct_id WHERE i.description ILIKE '%vaccine%' ORDER BY s.start_date DESC LIMIT 100;"
+"Find the 100 newest biological interventions","SELECT i.* FROM interventions i JOIN studies s ON i.nct_id = s.nct_id WHERE i.intervention_type ILIKE 'Biological' ORDER BY s.start_date DESC LIMIT 100;"
+"Find the 100 newest biological interventions. Use the studie's start date to determin which interventions are the newest. Return all the columns for each intervention along with the studie's start date","SELECT interventions.*, studies.start_date FROM interventions JOIN studies ON interventions.nct_id = studies.nct_id ORDER BY studies.start_date DESC LIMIT 100;"
+"Get the 200 latest intravenous drug interventions","SELECT i.* FROM interventions i JOIN studies s ON i.nct_id = s.nct_id WHERE i.description ILIKE '%intravenous%' AND i.intervention_type ILIKE '%drug%' ORDER BY s.start_date ASC LIMIT 200;"
+"Retrieve the 100 most recent studies related to diabetes. Include the study's ID, official title, start date, completion date, and overall status.","s.nct_id, official_title, start_date, completion_date, overall_status FROM studies s JOIN conditions c ON s.nct_id = c.nct_id WHERE c.name ILIKE '%diabetes%' ORDER BY start_date DESC LIMIT 100;"

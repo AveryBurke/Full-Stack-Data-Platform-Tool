@@ -1,0 +1,14 @@
+{
+	"name": "get_example_rows",
+	"description": "Get example rows from a table in the database",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"table": {
+				"type": "string",
+				"description": "The name of the table to get example rows from"
+			}
+		},
+		"required": ["table"]
+	}
+}

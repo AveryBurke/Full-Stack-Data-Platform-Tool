@@ -1,0 +1,14 @@
+{
+    "name": "get_refering_tables",
+    "description": "Get a description of all the tables that refer to a given table",
+    "parameters":{
+        "type": "object",
+        "properties": {
+            "table": {
+                "description": "The name of the table to get the refering tables for",
+                "type": "string"
+            }
+        },
+        "required": ["table"]
+    }
+}

@@ -1,6 +1,8 @@
 "use client";
 import React, { useRef, useState } from "react";
-import executeQuery from "@/app/actions/executeQuerey";
+import { queryAgent } from "@/app/actions/runQueryAgent";
+import { suggestionAgent } from "../actions/runSuggestionAgent";
+// import executeQuery from "@/app/actions/runAgent";
 import Table from "@/app/components/Table";
 import GridLoader from "react-spinners/GridLoader";
 import DeveloperFeedbackButton from "./DeveloperFeedbackButton";
@@ -12,20 +14,36 @@ interface TextInputProps {
 const TextInput: React.FC<TextInputProps> = ({ enableDeveloperFeedbackButton }) => {
 	const [queryResult, setQueryResult] = useState<any[] | null>();
 	const [query, setQuery] = useState("");
+	const [previousSuggestion, setPreviousSuggestion] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const hanldeSuggestionRequest = async (event: React.FormEvent) => {
+		event.preventDefault();
+		try {
+			const message = await suggestionAgent(previousSuggestion);
+			if (message.message === "success") {
+				const { data, query } = message.payload;
+				inputRef.current!.value = query;
+				setPreviousSuggestion(query);
+			}
+		} catch (error) {
+			console.error("Error getting suggestion:", error);
+		
+		}
+	}
 	const handleSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
 		setLoading(true);
 		const inputValue = inputRef.current?.value;
 		if (inputValue) {
 			try {
-				const message = await executeQuery(inputValue);
+				const message = await queryAgent(inputValue);
+				console.log("message", message);
 				if (message.message === "success") {
 					const { data, query } = message.payload;
 					console.log("data", data);
 					console.log("query", query);
-					if (data.length > 0){
+					if (data.length > 0) {
 						setQueryResult(data);
 					}
 					setQuery(query);
@@ -57,11 +75,17 @@ const TextInput: React.FC<TextInputProps> = ({ enableDeveloperFeedbackButton }) 
 							required
 						/>
 					</div>
-					<div className="flex flex-row gap-2">
+					<div className="flex flex-row gap-6">
 						<button
 							type="submit"
 							className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
 							Submit
+						</button>
+						<button
+							type="button"
+							onClick={hanldeSuggestionRequest}
+							className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+							Suggest
 						</button>
 						{enableDeveloperFeedbackButton && <DeveloperFeedbackButton prompt={inputRef.current ? inputRef.current.value : ""} query={query} />}
 					</div>

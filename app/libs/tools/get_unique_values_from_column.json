@@ -1,0 +1,18 @@
+{
+    "name": "get_uniqe_values_from_column",
+    "description": "Returns the unique values from a column in a table if the column contains 20 or fewer unique values. If there are more than 20 unique values from a column in a table, the function returns the number of unique values. Use this function when to determin if a WHERE clause in a SQL query requries a '=' or 'ILIKE' operator. Only use tables and columns that appear in the database description or in the table description. Do not assume the existance of any columns or tables.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "table_name": {
+                "type": "string",
+                "description": "The name of the table."
+            },
+            "column_name": {
+                "type": "string",
+                "description": "The name of the column."
+            }
+        },
+        "required": ["table_name", "column_name"]
+    }
+}

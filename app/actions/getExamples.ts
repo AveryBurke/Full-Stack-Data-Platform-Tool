@@ -1,9 +1,10 @@
+"use server"
 import fs from "fs";
 import csvParser from "csv-parser";
 
 interface Example {
-	Prompt: string;
-	Query: string;
+	prompt: string;
+	query: string;
 }
 
 export default async function getExamples(): Promise<Example[]> {

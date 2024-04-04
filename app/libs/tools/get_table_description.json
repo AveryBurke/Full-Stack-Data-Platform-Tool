@@ -1,0 +1,14 @@
+{
+    "name": "get_table_description",
+    "description": "Get a detailed description of a table in the database.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "table_name": {
+                "type": "string",
+                "description": "The name of the table"
+            }
+        },
+        "required": ["table_name"]
+    }
+}

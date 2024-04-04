@@ -1,0 +1,14 @@
+{
+	"name": "request_data_from_db",
+	"description": "Get data from the database using request. The request will be parsed into a SQL query and executed.",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"request": {
+				"type": "string",
+				"description": "a request for useful data from the database."
+			}
+		},
+		"required": ["request"]
+	}
+}

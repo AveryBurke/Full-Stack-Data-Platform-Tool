@@ -53,16 +53,30 @@ interface Message<T> {
 	message: string;
 	payload: T;
 }
-interface ErrorMessage extends Message<{error: string}>{
+interface ErrorMessage extends Message<{ error: string }> {
 	message: "error";
 }
-interface SucesssMessage extends Message<{data:any[], query:string}>{
+interface SucesssMessage extends Message<{ data: any[]; query: string }> {
 	message: "success";
 }
 
 declare global {
+	/**
+	 * the available models in the database. Not every table is available for querying.
+	 */
 	type Model = (typeof models)[number];
 	type DiscriminatedMessage = SucesssMessage | ErrorMessage;
+	/**
+	 * the available tools that the AI can use.
+	 */
+	type Tool =
+		| "get_data_from_db"
+		| "get_table_description"
+		| "get_uniqe_values_from_column"
+		| "get_refering_tables"
+		| "get_example_rows"
+		| "request_data_from_db";
+	type AvailableTools = {[key in Tool]?: (...args: string[]) => Promise<string>}
 }
 
 export {};

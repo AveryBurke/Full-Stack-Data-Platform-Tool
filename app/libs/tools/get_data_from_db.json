@@ -1,0 +1,14 @@
+{
+	"name": "get_data_from_db",
+	"description": "Get data from the database using a valid SQL query. The database must return the requested data. Only use tables and columns that appear in the database description or in the table description.  Do not assume the existance of any columns or tables.",
+	"parameters": {
+		"type": "object",
+		"properties": {
+			"query": {
+				"type": "string",
+				"description": "a valid SQL query"
+			}
+		},
+		"required": ["query"]
+	}
+}

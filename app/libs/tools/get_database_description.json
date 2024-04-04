@@ -1,0 +1,4 @@
+{
+	"name": "get_database_description",
+	"description": "Get a detailed description of the database. This includes all the tables and their corresponding fields.  Only use columns, feilds and tables that are listed in the database description."
+}
