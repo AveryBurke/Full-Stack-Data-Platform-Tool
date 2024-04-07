@@ -12,7 +12,7 @@ interface AgentArgs {
 	conversationLimit: number;
 	tools: OpenAI.ChatCompletionTool[];
 	availableTools: AvailableTools;
-	callback:(input:string) => Promise<any>;
+	callback: (input: string) => Promise<any>;
 	temprature?: number;
 }
 /**
@@ -24,7 +24,7 @@ interface AgentArgs {
  * @param availableTools an object whose keys are the names of the tools and the values are the functions that the tools call
  * @returns a DiscriminatedMessage object the message is either "success" or "error" and the payload is the data or error message.
  */
-export async function agent(input: AgentArgs): Promise<DiscriminatedMessage> {
+export async function agent(input: AgentArgs): Promise<AgentMessage> {
 	const { userInput, systePrompt, model, conversationLimit, tools, availableTools, temprature, callback } = input;
 	const messages: OpenAI.ChatCompletionMessageParam[] = [{ role: "system", content: systePrompt }];
 	messages.push({
@@ -47,10 +47,7 @@ export async function agent(input: AgentArgs): Promise<DiscriminatedMessage> {
 		if (finish_reason === "tool_calls" && message.tool_calls) {
 			console.log("message.tool_calls[0]:", message.tool_calls[0]);
 			const functionName = message.tool_calls[0].function.name;
-			const functionToCall =
-				availableTools[
-					functionName as Tool
-				];
+			const functionToCall = availableTools[functionName as Tool];
 			const functionArgs = JSON.parse(message.tool_calls[0].function.arguments);
 			const functionArgsArr: string[] = Object.values(functionArgs);
 			if (functionName === "get_data_from_db" || functionName === "request_data_from_db") {
@@ -69,16 +66,15 @@ export async function agent(input: AgentArgs): Promise<DiscriminatedMessage> {
 		} else if (finish_reason === "stop") {
 			messages.push(message);
 			try {
-				const data = await callback(currentArg)
-				const query = currentArg;
-				return { message: "success", payload: { data, query } };
+				const message = await callback(currentArg);
+				return { type: "success", message };
 			} catch (error: any) {
-				return {message: "error", payload: {error: error}};
+				return { type: "error", message: error };
 			}
 		}
 	}
 	return {
-		message: "error",
-		payload: { error: "The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input" },
+		type: "error",
+		message: "The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input",
 	};
 }

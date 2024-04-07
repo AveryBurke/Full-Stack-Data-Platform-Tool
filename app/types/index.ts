@@ -66,6 +66,10 @@ declare global {
 	 */
 	type Model = (typeof models)[number];
 	type DiscriminatedMessage = SucesssMessage | ErrorMessage;
+	interface AgentMessage {
+		type: "success" | "error";
+		message: string;
+	}
 	/**
 	 * the available tools that the AI can use.
 	 */
