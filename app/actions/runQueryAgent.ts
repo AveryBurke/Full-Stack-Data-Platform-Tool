@@ -30,6 +30,9 @@ export const queryAgent = async (request: string) => {
 		{ type: "function", function: get_refering_tables },
 		{ type: "function", function: get_example_rows },
 	];
+	const callback = async (query: string) => {
+		return query
+	}
 	const availableTools: AvailableTools = {
 		get_data_from_db: getDataFromDB,
 		get_table_description: (tableName: string) => getTableDescription(tableName as Model, "ctgov", true),
@@ -46,7 +49,7 @@ export const queryAgent = async (request: string) => {
 		systePrompt,
 		model: "gpt-3.5-turbo-0125",
 		conversationLimit: 10,
-		callback: rawQuery,
+		callback,
 	});
 	return message;
 };
