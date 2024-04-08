@@ -8,7 +8,6 @@ interface SheetProps {
 /**
  * an editable spreadsheet component.
  * This component uses the Tabulator library to render a spreadsheet.
- * TO DO:  create
  */
 const Sheet: React.FC<SheetProps> = ({ data }) => {
 	const ref = useRef<any>(null);
@@ -25,8 +24,8 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 				height: "311px",
 
 				spreadsheet: true,
-				spreadsheetRows: 50,
-				spreadsheetColumns: 50,
+				// spreadsheetRows: 50,
+				// spreadsheetColumns: 50,
 				spreadsheetColumnDefinition: { editor: "input", resizable: "header" },
 				//@ts-ignore
 				spreadsheetData: data,
@@ -56,6 +55,12 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 			});
 			// table.setData(data);
 			refTable.current = table;
+		}
+		return () => {
+			if (refTable.current) {
+				refTable.current.destroy();
+				refTable.current = null;
+			}
 		}
 	}, [data]);
 	return (

@@ -10,14 +10,16 @@ export function sanitize(obj: { [key: string]: any }) {
             case "object":
                 if (isValid(obj[key])) {
                     newObj[key] = format(obj[key] as Date, "MM/dd/yyyy");
+                } else {
+                    newObj[key] = obj[key];
                 }
                 break;
-            case "boolean":
-                newObj[key] = obj[key] ? "true" : "false";
-                break;
-            case "bigint":
-                newObj[key] = obj[key].toNumber();
-                break;
+            // case "boolean":
+            //     newObj[key] = obj[key] ? "true" : "false";
+            //     break;
+            // case "bigint":
+            //     newObj[key] = obj[key].toNumber();
+            //     break;
             default:
                 newObj[key] = obj[key];
                 break;

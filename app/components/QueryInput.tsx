@@ -3,13 +3,8 @@ import React, { useRef, useState, memo } from "react";
 import { queryAgent } from "@/app/actions/runQueryAgent";
 import { suggestionAgent } from "../actions/runSuggestionAgent";
 import TextareaForm from "./inputs/TextareaForm";
+import GridLoader from "react-spinners/GridLoader";
 import SheetClient from "./SheetClient";
-import Sheet from "./Sheet"
-// import { rawQuery } from "../actions/rawQuery";
-// import executeQuery from "@/app/actions/runAgent";
-// import Table from "@/app/components/Table";
-// import GridLoader from "react-spinners/GridLoader";
-// import DeveloperFeedbackButton from "./DeveloperFeedbackButton";
 
 const TextInput: React.FC = () => {
 	const [query, setQuery] = useState("");
@@ -42,10 +37,6 @@ const TextInput: React.FC = () => {
 		setLoading(false);
 	};
 
-	// const MemoSheetClient = memo( async function MemoSheetClient({ query }: { query: string }) {
-	// 	return <SheetClient query={query} />;
-	// });
-
 	return (
 		<div>
 			<TextareaForm
@@ -57,16 +48,8 @@ const TextInput: React.FC = () => {
 				sunmitButtonLabel="Fetch"
 				secondaryButtonLabel="Suggest"
 			/>
-			<SheetClient query={query} />
-			{/* <SheetClient query={query} /> */}
-			{/* <MemoSheetClient query={query} />
-			 */}
-			{/* {loading ? (
-				<GridLoader loading={loading} />
-			) : queryResult ? (
-				<Table data={queryResult} />
-			) : null} */}
-			{/* <DeveloperFeedbackButton /> */}
+			{!loading && <SheetClient query={query} />}
+			{loading && <GridLoader />}
 		</div>
 	);
 };

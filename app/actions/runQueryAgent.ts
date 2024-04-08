@@ -31,13 +31,25 @@ export const queryAgent = async (request: string) => {
 		{ type: "function", function: get_example_rows },
 	];
 	const callback = async (query: string) => {
-		return query
-	}
+		return query;
+	};
+
+	const get_uniqe_values_from_column = async (tableName: string, columnName: string) => {
+		const res = await getUniqueValues(tableName as Model, columnName);
+		const onlyPositiveNumbers = res.match(/\d+/g);
+		if (onlyPositiveNumbers) {
+			return `There are ${res} unique values in the ${columnName} column of the ${tableName} table. Do not search for individual values in this column.`;
+		} else if (res === "No data found.") {
+			return res;
+		}
+		return `The unique values in the ${columnName} column of the ${tableName} table are: ${res}. Use these values to search for specific data in the column or to filter the data in the column.`;
+	};
+
 	const availableTools: AvailableTools = {
 		get_data_from_db: getDataFromDB,
 		get_table_description: (tableName: string) => getTableDescription(tableName as Model, "ctgov", true),
 		// get_database_description: () => getDBSchema("ctgov"),
-		get_uniqe_values_from_column: (tableName: string, columnName: string) => getUniqueValues(tableName as Model, columnName),
+		get_uniqe_values_from_column,
 		get_refering_tables: getReferingTables,
 		get_example_rows: (row: string) => getExampleRows(row, 5),
 		request_data_from_db: getDataFromDB,
