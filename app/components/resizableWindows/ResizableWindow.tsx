@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import ResizableHandle from "./ResizableHandle";
-import container from "../Container";
 
 interface ResizablePaneProps {
 	minSize: number;
@@ -12,9 +11,10 @@ interface ResizablePaneProps {
 	bgColor: string;
 	growDirection?: "left" | "right" | "top" | "bottom";
 	children?: React.ReactNode;
+	additionalStyles?: string;
 }
 
-const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, maxSize, grow, vertical: isVertical, bgColor, growDirection, children }) => {
+const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, maxSize, grow, vertical: isVertical, bgColor, growDirection, children, additionalStyles }) => {
 	const [size, setSize] = useState(initialSize);
 	const [isResizing, setIsResizing] = useState(false);
 
@@ -43,7 +43,7 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, max
 
 	const handleMouseDown = () => setIsResizing(true);
 	return (
-		<div className={`@container relative ${bgColor} ${grow ? "grow" : ""} shrink-0`} style={{ [dimension]: `${size}px` }}>
+		<div className={`@container relative ${bgColor} ${grow ? "grow" : ""} shrink-0 ` + additionalStyles} style={{ [dimension]: `${size}px` }}>
 			{!grow && <ResizableHandle isResizing={isResizing} isVertical={isVertical} handleMouseDown={handleMouseDown} direction={growDirection || "right"} />}
 			{children}
 		</div>

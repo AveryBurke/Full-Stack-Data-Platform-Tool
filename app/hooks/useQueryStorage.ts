@@ -1,15 +1,19 @@
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 
-export const useQueryStore = create(
-	persist(
-		(set, get) => ({
-			query: "",
-			overWriteQuery: (q: string) => set({ query: q }),
-		}),
-		{
-			name: "query-storage",
-			storage: createJSONStorage(() => localStorage), // Use local storage
-		}
-	)
-);
+interface QueryStore {
+	query: string;
+	isLoading: boolean;
+	onLoading: () => void;
+	onFinish: () => void;
+	setQuery: (query: string) => void;
+}
+
+const useQueryStore = create<QueryStore>((set) => ({
+	isLoading: false,
+	query: "",
+	onLoading: () => set({ isLoading: true }),
+	onFinish: () => set({ isLoading: false }),
+	setQuery: (query: string) => set({ query }),
+}));
+
+export default useQueryStore;
