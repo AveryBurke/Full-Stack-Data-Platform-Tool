@@ -1,9 +1,6 @@
 "use server";
 import client from "@/app/libs/openAiClient";
-import prisma from "@/app/libs/prismadb";
-import { sanitize } from "@/app/libs/sanitize";
 import OpenAI from "openai";
-import { callbackify } from "util";
 
 interface AgentArgs {
 	userInput: string;
@@ -16,12 +13,14 @@ interface AgentArgs {
 	temprature?: number;
 }
 /**
- * A function that takes a user's input and a system prompt and runs a conversation with the AI model
+ * Runs a conversation with the AI model then calls the callback function with the last argument from the conversation.
  * @param userInput the user's text prompt
  * @param systePrompt the role that system plays, a list of tools availble to the AI and any other information that the AI needs to know
  * @param model the ChatGPT model to use
  * @param conversationLimit the number of iterations to run the conversation
  * @param availableTools an object whose keys are the names of the tools and the values are the functions that the tools call
+ * @param callback a function that is called with the last argument from the conversation
+ * @param temprature the temprature to use for the model
  * @returns a DiscriminatedMessage object the message is either "success" or "error" and the payload is the data or error message.
  */
 export async function agent(input: AgentArgs): Promise<AgentMessage> {

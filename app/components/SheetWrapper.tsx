@@ -10,6 +10,7 @@ const SheetWrapper = () => {
 	const [data, setData] = useState<any[]>([]);
 
 	useEffect(() => {
+		queryStore.onLoading();
 		const fetchData = async () => {
 			const data = await rawQuery(queryStore.query);
 			const columnHeaders = Object.keys(data[0]).map((key) => key.charAt(0).toUpperCase() + key.slice(1));
@@ -17,10 +18,11 @@ const SheetWrapper = () => {
 			setData(spreadsheetData);
 		};
 		if (queryStore.query.length > 0) fetchData();
+		queryStore.onFinish();
 	}, [queryStore.query]);
 
 	const Memo = memo(() => <Sheet data={data} />);
-	return queryStore.isLoading ? <Loader /> : <div className="w-full h-full p-2 relative flex flex-col justify-center content-center"><Memo /></div>;
+	return queryStore.isLoading ? <Loader color="#e6c07b" /> : <Memo />;
 };
 
 export default SheetWrapper;

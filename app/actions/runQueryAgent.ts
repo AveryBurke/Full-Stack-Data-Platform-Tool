@@ -12,7 +12,6 @@ import { getUniqueValues } from "./getUniqueValues";
 import { getReferingTables } from "./getReferingTables";
 import { getExampleRows } from "./getExampleRows";
 import { agent } from "./runAgent";
-import { rawQuery } from "./rawQuery";
 
 import { generateSystemPrompts } from "./generateSystemPrompt";
 /**

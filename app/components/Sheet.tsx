@@ -11,6 +11,7 @@ interface SheetProps {
  * This component uses the Tabulator library to render a spreadsheet.
  */
 const Sheet: React.FC<SheetProps> = ({ data }) => {
+	const tableNameRef = useRef<HTMLInputElement>(null);
 	const ref = useRef<any>(null);
 	const refTable = useRef<Tabulator | null>(null);
 	const handleDownload = () => {
@@ -22,7 +23,7 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 	useEffect(() => {
 		if (ref.current) {
 			const table = new Tabulator(ref.current, {
-				height: "311px",
+				height: "500px",
 
 				spreadsheet: true,
 				// spreadsheetRows: 50,
@@ -65,7 +66,15 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 		};
 	}, [data]);
 	return (
-		<>
+		<div className="w-full h-full p-2 flex flex-col justify-center content-center">
+			<div>
+				<input
+					type="text"
+					ref={tableNameRef}
+					placeholder="Table Name"
+					className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
+				/>
+			</div>
 			<div className="p-2">
 				<div ref={ref} className="spreadsheet"></div>
 			</div>
@@ -77,7 +86,7 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 					<span>Download</span>
 				</button>
 			</div>
-		</>
+		</div>
 	);
 };
 
