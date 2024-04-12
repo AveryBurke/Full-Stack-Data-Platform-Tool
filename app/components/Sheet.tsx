@@ -15,15 +15,16 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 	const ref = useRef<any>(null);
 	const refTable = useRef<Tabulator | null>(null);
 	const handleDownload = () => {
+		const name = tableNameRef.current?.value || "Data";
 		if (refTable.current) {
-			refTable.current.download("xlsx", "data.xlsx", { sheetName: "My Data" });
+			refTable.current.download("xlsx", `${name}.xlsx`);
 		}
 	};
 
 	useEffect(() => {
 		if (ref.current) {
 			const table = new Tabulator(ref.current, {
-				height: "500px",
+				height: "550px",
 
 				spreadsheet: true,
 				// spreadsheetRows: 50,
@@ -67,14 +68,13 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 	}, [data]);
 	return (
 		<div className="w-full h-full p-2 flex flex-col justify-center content-center">
-			<div>
-				<input
-					type="text"
-					ref={tableNameRef}
-					placeholder="Table Name"
-					className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
-				/>
-			</div>
+			<input
+				type="text"
+				ref={tableNameRef}
+				placeholder="Table Name"
+				className=" w-40 h-8 py-3 px-4 block border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
+			/>
+
 			<div className="p-2">
 				<div ref={ref} className="spreadsheet"></div>
 			</div>

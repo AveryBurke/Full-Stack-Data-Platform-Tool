@@ -4,8 +4,6 @@ import "./globals.css";
 import "tabulator-tables/dist/css/tabulator.min.css";
 import Script from "next/script";
 import HydrationBoundary from "./components/HydrationBoundry";
-import Tooltip from "./components/ToolTip";
-
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +23,6 @@ export default function RootLayout({
 				<Script type="text/javascript" src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js" strategy="lazyOnload"></Script>
 			</head>
 			<body className={inter.className}>
-				<Tooltip />
 				<HydrationBoundary>
 					{children}
 				</HydrationBoundary>

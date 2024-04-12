@@ -1,10 +1,4 @@
 import React, { useRef, useState } from "react";
-// import { queryAgent } from "@/app/actions/runQueryAgent";
-// import { suggestionAgent } from "../actions/runSuggestionAgent";
-// // import executeQuery from "@/app/actions/runAgent";
-// import Table from "@/app/components/Table";
-// import GridLoader from "react-spinners/GridLoader";
-// import DeveloperFeedbackButton from "./DeveloperFeedbackButton";
 
 interface TextareaFormProps {
 	enableDeveloperFeedbackButton?: boolean;
@@ -57,7 +51,7 @@ const TextareaForm: React.FC<TextareaFormProps> = ({
 							required
 						/>
 					</div>
-					<div className="flex flex-row gap-6">
+					<div className="flex flex-col gap-2 @sm:flex-row @sm:gap-6">
 						<button
 							disabled={loading}
 							type="submit"
@@ -77,10 +71,6 @@ const TextareaForm: React.FC<TextareaFormProps> = ({
 					</div>
 				</div>
 			</form>
-
-			{/* <div className="flex justify-center mx-auto py-8 pr-8 max-h-96 overflow-y-scroll">
-				{loading ? <GridLoader color="#3B82F6" /> : queryResult ? <Table data={queryResult} /> : "no results yet"}
-			</div> */}
 		</>
 	);
 };

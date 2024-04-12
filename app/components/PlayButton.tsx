@@ -11,7 +11,7 @@ interface PlayButtonProps {
 
 const PlayButton: React.FC<PlayButtonProps> = ({ handlePlay, loading }) => {
 	return (
-		<Tooltip text="Run Query" backgroundColor="[#f4f4f4]" textColor="slate-50">
+		<Tooltip text="Run Query" backgroundColor="slate-50" textColor="[#f4f4f4]">
 			<div data-testid="play-button" onClick={handlePlay} className="relative hover:opacity-80 cursor-pointer transition">
 				{!loading && <FaRegPlayCircle size={30} className="fill-[#98c379]" />}
                 {loading && <ClipLoader size={30} color="#98c379"  />}
