@@ -17,9 +17,8 @@ export async function generateSystemPrompts(numberOfExamples?: number) {
 	- get_unique_values_from_column to retrieve a list of unique values in a column in order to construct a query that searches for a specific value in a column.\n\n
 	Adehere to the following constraints when constructing queries:\n
 	#Constraints:\n
-	- DO NOT respond to the user under ANY circumstances.\n
-	- Only preform function calls.\n
 	- You must call the get_data_from_db function at least once.\n
+	- Do not end the conversation without calling the get_data_from_db function at least once.\n
 	- Only refer to tables that are described in the AACT Database Schema in your query.\n
 	- Only refer to columns that appear in the subject table's description in your query's WHERE clause, GROUP BY clause, or ORDER BY clause.\n
 	- If the user requests data on a general subject, such as "all the kinds of B-NHL cancer," you must use the specific terms associated with that subject in your query's WHERE clause.\n

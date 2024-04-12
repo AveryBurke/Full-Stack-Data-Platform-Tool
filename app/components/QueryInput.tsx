@@ -3,13 +3,11 @@ import React, { useRef, useState, memo } from "react";
 import { queryAgent } from "@/app/actions/runQueryAgent";
 import { suggestionAgent } from "../actions/runSuggestionAgent";
 import TextareaForm from "./inputs/TextareaForm";
-import GridLoader from "react-spinners/GridLoader";
-import SheetClient from "./SheetClient";
+import useQueryStore from "../hooks/useQueryStorage";
 
 const TextInput: React.FC = () => {
-	const [query, setQuery] = useState("");
+	const queryStore = useQueryStore();
 	const [previousSuggestion, setPreviousSuggestion] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const hanldeSuggestionRequest = async (value: string) => {
 		try {
@@ -22,19 +20,19 @@ const TextInput: React.FC = () => {
 			console.error("Error getting suggestion:", error);
 		}
 	};
-	const handleSubmit = async (value: string) => {
-		setLoading(true);
+	const handleSubmit = async (request: string) => {
+		queryStore.onLoading();
 		try {
-			const message = await queryAgent(value);
+			const message = await queryAgent(request);
 			if (message.type === "success") {
-				setQuery(message.message);
+				queryStore.setQuery(message.message);
 			} else {
-				setQuery("");
+				queryStore.setQuery("");
 			}
 		} catch (error) {
 			console.error("Error executing query:", error);
 		}
-		setLoading(false);
+		queryStore.onFinish();
 	};
 
 	return (
@@ -42,14 +40,12 @@ const TextInput: React.FC = () => {
 			<TextareaForm
 				handleSubmit={handleSubmit}
 				handleSecondaryAction={hanldeSuggestionRequest}
-				loading={loading}
+				loading={queryStore.isLoading}
 				title="Fetch data"
 				placeholder="Enter your request here."
 				sunmitButtonLabel="Fetch"
 				secondaryButtonLabel="Suggest"
 			/>
-			{!loading && <SheetClient query={query} />}
-			{loading && <GridLoader />}
 		</div>
 	);
 };
