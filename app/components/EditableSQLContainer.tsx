@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
-import useQueryStore from "../hooks/useQueryStorage";
+import { useQueryStore } from "../hooks/useQueryStorage";
 import CodeEditor from "./CodeEditor";
 import { format } from "sql-formatter";
 

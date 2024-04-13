@@ -1,12 +1,12 @@
 "use client";
-import React, { memo, useState, useEffect } from "react";
-import useQueryStorage from "@/app/hooks/useQueryStorage";
+import React, { memo, useState, useEffect, use } from "react";
+import { useQueryStore } from "@/app/hooks/useQueryStorage";
 import { rawQuery } from "../actions/rawQuery";
 import Sheet from "./Sheet";
 import Loader from "./Loader";
 
 const SheetWrapper = () => {
-	const queryStore = useQueryStorage();
+	const queryStore = useQueryStore();
 	const [data, setData] = useState<any[]>([]);
 
 	useEffect(() => {

@@ -3,7 +3,7 @@ import React, { useRef, useState, memo } from "react";
 import { queryAgent } from "@/app/actions/runQueryAgent";
 import { suggestionAgent } from "../actions/runSuggestionAgent";
 import TextareaForm from "./inputs/TextareaForm";
-import useQueryStore from "../hooks/useQueryStorage";
+import { useQueryStore } from "../hooks/useQueryStorage";
 
 const TextInput: React.FC = () => {
 	const queryStore = useQueryStore();
