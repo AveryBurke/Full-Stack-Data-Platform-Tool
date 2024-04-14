@@ -24,7 +24,7 @@ export const useQueryStore = create<QueryStore>()(
 		}),
 		{
 			name: "query-store",
-			storage: createJSONStorage(() => localStorage), 
+			storage: createJSONStorage(() => localStorage),
 		}
 	)
 );

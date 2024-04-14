@@ -18,7 +18,8 @@ const EditableSQLContainer = () => {
 		if (code !== queryStore.query) {
 			// the sheet component will only fetch new data if the current data is empty
 			queryStore.setData([]);
-			queryStore.setQuery(code);
+			const unformat =  code.replace(/\n/g, " ").replace(/ +/g, ' ').trim();
+			queryStore.setQuery(unformat);
 		}
 	};
 
