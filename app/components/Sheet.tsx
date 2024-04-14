@@ -3,14 +3,13 @@ import React, { useEffect, useRef } from "react";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 interface SheetProps {
 	data: any[];
-	fileName?: string;
-	sheetName?: string;
+	onDataChange?: (data: any[]) => void;
 }
 /**
  * an editable spreadsheet component.
  * This component uses the Tabulator library to render a spreadsheet.
  */
-const Sheet: React.FC<SheetProps> = ({ data }) => {
+const Sheet: React.FC<SheetProps> = ({ data, onDataChange }) => {
 	const tableNameRef = useRef<HTMLInputElement>(null);
 	const ref = useRef<any>(null);
 	const refTable = useRef<Tabulator | null>(null);
@@ -58,6 +57,9 @@ const Sheet: React.FC<SheetProps> = ({ data }) => {
 			});
 
 			refTable.current = table;
+			table.on("dataChanged", (data) => {
+				if (onDataChange) onDataChange(data);
+			});
 		}
 		return () => {
 			if (refTable.current) {

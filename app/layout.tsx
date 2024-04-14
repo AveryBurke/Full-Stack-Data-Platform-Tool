@@ -4,6 +4,7 @@ import "./globals.css";
 import "tabulator-tables/dist/css/tabulator.min.css";
 import Script from "next/script";
 import HydrationBoundary from "./components/HydrationBoundry";
+import ToasterProvider from "./providers/ToastProivder";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
 			</head>
 			<body className={inter.className}>
 				<HydrationBoundary>
+					<ToasterProvider />
 					{children}
 				</HydrationBoundary>
 			</body>

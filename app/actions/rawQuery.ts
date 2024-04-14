@@ -1,15 +1,19 @@
 "use server";
 import prisma from "@/app/libs/prismadb";
-import { sanitize } from "@/app/libs/sanitize";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
-export const rawQuery = async (query: string):Promise<any[]> => {
+export const rawQuery = async (query: string): Promise<any[]> => {
+	if (!prisma) throw new Error("Prisma client is not available.");
 	try {
 		const data = await prisma.$queryRawUnsafe<any[]>(query);
-		return data
+		return data;
 	} catch (error) {
-		if (error instanceof Error) {
-			throw new Error(error.message);
+		if (error instanceof PrismaClientKnownRequestError) {
+			// @ts-ignore
+			const { message } = error.meta;
+			throw new Error(message);
+		} else {
+			throw new Error("An error occurred while fetching the data.");
 		}
-		return []
 	}
 };

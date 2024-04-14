@@ -3,7 +3,8 @@ import React, { useRef, useState, memo } from "react";
 import { queryAgent } from "@/app/actions/runQueryAgent";
 import { suggestionAgent } from "../actions/runSuggestionAgent";
 import TextareaForm from "./inputs/TextareaForm";
-import useQueryStore from "../hooks/useQueryStorage";
+import { useQueryStore } from "../hooks/useQueryStorage";
+import { toast } from "react-hot-toast";
 
 const TextInput: React.FC = () => {
 	const queryStore = useQueryStore();
@@ -25,12 +26,14 @@ const TextInput: React.FC = () => {
 		try {
 			const message = await queryAgent(request);
 			if (message.type === "success") {
-				queryStore.setQuery(message.message);
+				queryStore.setData([]);
+				const unformat =  message.message.replace(/\n/g, " ").replace(/ +/g, ' ').trim();
+				queryStore.setQuery(unformat);
 			} else {
 				queryStore.setQuery("");
 			}
 		} catch (error) {
-			console.error("Error executing query:", error);
+			toast.error("Error executing query.");
 		}
 		queryStore.onFinish();
 	};

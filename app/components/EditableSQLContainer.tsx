@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
-import useQueryStore from "../hooks/useQueryStorage";
+import { useQueryStore } from "../hooks/useQueryStorage";
 import CodeEditor from "./CodeEditor";
 import { format } from "sql-formatter";
 
@@ -15,7 +15,12 @@ const EditableSQLContainer = () => {
 	const [componentMaxHeight, setComponentMaxHeight] = useState(0);
 
 	const handleQuerySubmit = () => {
-		if (code !== queryStore.query) queryStore.setQuery(code);
+		if (code !== queryStore.query) {
+			// the sheet component will only fetch new data if the current data is empty
+			queryStore.setData([]);
+			const unformat =  code.replace(/\n/g, " ").replace(/ +/g, ' ').trim();
+			queryStore.setQuery(unformat);
+		}
 	};
 
 	useEffect(() => {
