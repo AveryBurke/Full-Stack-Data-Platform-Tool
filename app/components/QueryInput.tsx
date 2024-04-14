@@ -25,6 +25,7 @@ const TextInput: React.FC = () => {
 		try {
 			const message = await queryAgent(request);
 			if (message.type === "success") {
+				queryStore.setData([]);
 				queryStore.setQuery(message.message);
 			} else {
 				queryStore.setQuery("");

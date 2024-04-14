@@ -15,7 +15,11 @@ const EditableSQLContainer = () => {
 	const [componentMaxHeight, setComponentMaxHeight] = useState(0);
 
 	const handleQuerySubmit = () => {
-		if (code !== queryStore.query) queryStore.setQuery(code);
+		if (code !== queryStore.query) {
+			// the sheet component will only fetch new data if the current data is empty
+			queryStore.setData([]);
+			queryStore.setQuery(code);
+		}
 	};
 
 	useEffect(() => {
