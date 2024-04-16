@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import useAccordion from "../hooks/useAccordion";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import * as themes from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { format } from "sql-formatter";
