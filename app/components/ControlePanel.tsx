@@ -7,7 +7,7 @@ import React, { useContext, useState, useEffect, useRef, useCallback, PropsWithC
 // import Sortable from "./SidebarSortable";
 // import SidebarComponentWrapper from "./SidebarComponentWrapper";
 // import camelToFlat from "../static/camelToFlat";
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Draggable, DropResult } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 // import DropTarget from "./DropTarget";
 
@@ -92,13 +92,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ set, onChange, scaleGenerat
 		<DragDropContext onDragEnd={hanldeDragEnd}>
 			<StrictModeDroppable droppableId="characters">
 				{(provided) => (
-					<ul className="characters" {...provided.droppableProps} ref={provided.innerRef}>
+					<ul className="characters rounded bg-[#abb2bf] bg-opacity-50 p-1 flex flex-col gap-[2px]" {...provided.droppableProps} ref={provided.innerRef}>
 						{set.map((member, index) => {
 							return (
 								<Draggable key={member} draggableId={member} index={index}>
 									{(provided) => (
 										<li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-											<p>{member}</p>
+											<div className="p-1 bg-[#282a36] rounded text-sm text-slate-50 transition duration-200 hover:bg-opacity-75 active:bg-opacity-75 active:z-10">{member}</div>
 										</li>
 									)}
 								</Draggable>

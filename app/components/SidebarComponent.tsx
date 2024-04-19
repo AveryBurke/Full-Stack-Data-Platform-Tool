@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useRef, PropsWithChildren, ReactComponentElement } from "react";
-// import useHeight from "../hooks/useHeight";
+import { useHeight } from "@/app/hooks/useHeight";
 import Select from "react-select";
-// import { useSpring, animated } from "react-spring";
-// import { easings } from "@react-spring/web";
-// import { dummyValue } from "../static/initialState";
+import { useSpring, animated } from "react-spring";
+import { easings } from "@react-spring/web";
 import camelToFlat from "@/app/libs/cameToFlat";
 
 /**
@@ -18,56 +17,48 @@ interface SidebarComponentWrapperProps {
 	currentKey: string;
 	title: string;
 	options: { value: string; label: string }[];
-    children: React.ReactNode;
-	// childrenl: ReactComponentElement<any>;
-	// props: any;
+	children: React.ReactNode;
 	handleChange: (key: string) => void;
 	handleReset: () => void;
-	set: string[];
 }
 
-const SidebarComponentWrapper:React.FC<SidebarComponentWrapperProps> = ({
+const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({
 	currentKey,
 	title,
 	options,
-
 	children,
-	// props,
 	handleChange,
 	handleReset,
-	set,
 }) => {
 	const [heightOn, setHeightOn] = useState(false);
-	// const [sizingRef, contentHeight] = useHeight({ on: heightOn });
+	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
 	const uiReady = useRef(false);
 
-	//wait until the compnent has rendered to pass a ref
-	// const activateRef = (ref: HTMLDivElement | null) => {
-	// 	sizingRef.current = ref;
-	// 	if (!heightOn) {
-	// 		setHeightOn(true);
-	// 	}
-	// };
+	// wait until the compnent has rendered to pass a ref
+	const activateRef = (ref: HTMLDivElement | null) => {
+		sizingRef.current = ref;
+		if (!heightOn) {
+			setHeightOn(true);
+		}
+	};
 
-	// const heightStyles = useSpring({
-	// 	immediate: !uiReady.current,
-	// 	config: {
-	// 		duration: 200,
-	// 		easing: easings.easeInOutQuad,
-	// 	},
-	// 	from: { height: 20 }, //<--the collapsed div is 20px. To do: make this programtic, or save the current size in state
-	// 	to: { height: contentHeight },
-	// 	onRest: () => (uiReady.current = true),
-	// });
+	const heightStyles = useSpring({
+		immediate: !uiReady.current,
+		config: {
+			duration: 200,
+			easing: easings.easeInOutQuad,
+		},
+		from: { height: 20 }, //<--the collapsed div is 20px. To do: make this programtic, or save the current size in state
+		to: { height: contentHeight },
+		onRest: () => (uiReady.current = true),
+	});
 
 	return (
-		<div className="sidebar-component" key="contrainer" id={`${title}_sidebar-component`}>
-			<div className="label-containter">
-				<span>{title}</span>
-				<div hidden={!currentKey.length}>
-					<div className="reset_button" onClick={() => handleReset()}>
-						reset
-					</div>
+		<div key="contrainer" id={`${title}_sidebar-component`}>
+			<div className="w-full flex flex-row justify-between items-baseline text-slate-50">
+				<span className="text-xl font-bold tracking-widest text-[#e6c07b]">{title}</span>
+				<div className="text-sm font-light cursor-pointer active:text-red-300" hidden={!currentKey.length} onClick={() => handleReset()}>
+					reset
 				</div>
 			</div>
 			<Select
@@ -117,14 +108,11 @@ const SidebarComponentWrapper:React.FC<SidebarComponentWrapperProps> = ({
 				onChange={(e) => (e ? handleChange(e.value) : console.log(e))}
 				id={`${title}_select`}
 			/>
-            <div className={!currentKey.length ? "hidden" : ""}>{children}</div>
-			{/* <animated.div style={{ width: "100%", overflow: "hidden", ...heightStyles }}>
-				<div style={{ width: "100%" }} ref={activateRef}>
-					<div hidden={currentKey.includes(dummyValue)} id={`${title}_controle_panel`}>
-						{childrenl}
-					</div>
-				</div>
-			</animated.div> */}
+			<animated.div style={{  ...heightStyles, overflow: "hidden" }}>
+				<div ref={activateRef} >
+                    <div className={currentKey.length ? "" : "hidden"}>{children}</div>
+                </div>
+			</animated.div>
 		</div>
 	);
 };

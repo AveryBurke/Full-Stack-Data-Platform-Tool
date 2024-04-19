@@ -7,8 +7,8 @@ interface SidebarLayoutProps {
 const sidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
 	return (
 		<aside className="p-2 h-screen w-full bg-[#282a36]">
-			<div className="p-2 pb-2 flex justify-between items-center">
-                <span className="text-2xl text-white">Sidebar</span>
+			<div className="p-2 pb-2 flex justify-center items-center">
+                <span className="text-2xl text-white tracking-wide">sidebar</span>
 				{/* <img src={logo} className={`overflow-hidden transition-all ${expanded ? "w-32" : "w-0"}`} />
 				<button onClick={() => setExpanded((curr) => !curr)} className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100">
 					{expanded ? <ChevronFirst /> : <ChevronLast />}
