@@ -12,7 +12,7 @@ interface LayoutProps {
 const layout:React.FC<LayoutProps> = ({children, codeEditor, sidebar, tabs, input}) => {
   return (
     <div className={`realtive h-screen w-screen flex-grow flex flex-row`}>
-			<ResizablePane minSize={0} initialSize={150} maxSize={150} growDirection="right" bgColor={"bg-[#282a36]"} additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]" >
+			<ResizablePane minSize={0} initialSize={200} maxSize={200} growDirection="right" bgColor={"bg-[#282a36]"} additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]" >
 				{sidebar}
 			</ResizablePane>
 			<div className={`h-screen w-screen flex-grow flex flex-col`}>

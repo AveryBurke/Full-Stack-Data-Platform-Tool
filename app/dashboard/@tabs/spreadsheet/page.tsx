@@ -5,6 +5,7 @@ import { rawQuery } from "@/app/actions/rawQuery";
 import Sheet from "./Sheet";
 import Loader from "@/app/components/Loader";
 import { toast } from "react-hot-toast";
+import { usePizzaState } from "@/app/hooks/usePizzaState";
 
 /**
  * A wrapper component that fetches data from the server and passes it to the Sheet component.
@@ -21,7 +22,7 @@ const SheetWrapper = () => {
 	const numberOfMounts = useRef(0);
 	const { query, setQuery, data, setData, onLoading, onFinish, isLoading } = useQueryStore();
 	const [sheetData, setSheetData] = useState<any[]>([]);
-
+	const { setOptions } = usePizzaState();
 	const formatAndSetSheetData = (data: any[]) => {
 		const headers = data.length > 0 ? Object.keys(data[0]) : [];
 		const formattedData = [headers, ...data.map((row) => Object.values(row))];
@@ -34,6 +35,9 @@ const SheetWrapper = () => {
 			try {
 				const res = await rawQuery(query);
 				setData(res);
+				const options = Object.keys(res[0]).map((key) => ({ value: key, label: key }));
+				setOptions(options);
+
 				formatAndSetSheetData(res);
 			} catch (error) {
 				if (error instanceof Error) {

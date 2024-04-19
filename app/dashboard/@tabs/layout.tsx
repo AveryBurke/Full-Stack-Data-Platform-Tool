@@ -15,7 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					pizza
 				</Link>
 			</nav>
-			<div>{children}</div>
+			<div className="h-full flex flex-col justify-center">{children}</div>
 		</>
 	);
 }
