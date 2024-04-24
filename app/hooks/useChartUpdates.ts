@@ -2,7 +2,7 @@ import { usePizzaState } from "./usePizzaState";
 import { useEffect } from "react";
 import { useQueryStore } from "./useQueryStorage";
 import { RefObject } from "react";
-import { createPizza } from "@/app/libs/createPizza";
+import { createPizza } from "@/app/libs/visualization/createPizza";
 
 export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) => {
 	const { data } = useQueryStore();
@@ -18,6 +18,7 @@ export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) 
 
 	useEffect(() => {
 		if (ref.current) {
+			ref.current.sliceColumn(sliceKey);
 			const sliceSet = [...new Set(data.map((d: any) => d[sliceKey]))];
 			setSliceSet(sliceSet);
 		}
@@ -27,7 +28,7 @@ export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) 
 		if (ref.current) {
 			ref.current.ringSet(ringSet);
 		}
-	}, [sliceSet, ref.current]);
+	}, [ringSet, ref.current]);
 
 	useEffect(() => {
 		if (ref.current) {
