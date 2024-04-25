@@ -75,7 +75,7 @@ function createPizza() {
 			// update handlers
 			updateData = () => {
 				console.log("updateData ", data);
-			};
+			};	
 
 			updateRingColumn = () => {
 				bacgroundWorker.changeTransitionDuration(Math.round(150 / ringSet.length));
