@@ -60,7 +60,27 @@ interface SucesssMessage extends Message<{ data: any[]; query: string }> {
 	message: "success";
 }
 
+
+type QueueTaskType = "transition" | "time";
+interface QueueTask<T extends QueueTaskType, P> {
+	type: T;
+	payload: P;
+
+}
+
+type TransitionQueueTask = QueueTask<"transition", Section[]>;
+type TimeQueueTask = QueueTask<"time", number>;
+
 declare global {
+	type Section = {
+		id: string;
+		startAngle: number;
+		endAngle: number;
+		innerRadius: number;
+		outerRadius: number;
+		fill: string;
+	}
+	type QueueJob = TransitionQueueTask | TimeQueueTask;
 	/**
 	 * the available models in the database. Not every table is available for querying.
 	 */

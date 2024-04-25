@@ -14,7 +14,17 @@ interface ResizablePaneProps {
 	additionalStyles?: string;
 }
 
-const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, maxSize, grow, vertical: isVertical, bgColor, growDirection, children, additionalStyles }) => {
+const ResizablePane: React.FC<ResizablePaneProps> = ({
+	minSize,
+	initialSize,
+	maxSize,
+	grow,
+	vertical: isVertical,
+	bgColor,
+	growDirection,
+	children,
+	additionalStyles,
+}) => {
 	const [size, setSize] = useState(initialSize);
 	const [isResizing, setIsResizing] = useState(false);
 
@@ -22,6 +32,7 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, max
 
 	useEffect(() => {
 		const handleMouseMove = (e: MouseEvent) => {
+			e.preventDefault();
 			if (!isResizing || !maxSize) return;
 
 			const movement = isVertical ? e.movementY : e.movementX;
@@ -31,7 +42,9 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, max
 			setSize(newSize);
 		};
 
-		const handleMouseUp = () => setIsResizing(false);
+		const handleMouseUp = (e:MouseEvent) => {
+			e.preventDefault();
+			setIsResizing(false);}
 
 		document.addEventListener("mousemove", handleMouseMove);
 		document.addEventListener("mouseup", handleMouseUp);
@@ -41,10 +54,20 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({ minSize, initialSize, max
 		};
 	}, [size, isResizing, minSize, maxSize, isVertical]);
 
-	const handleMouseDown = () => setIsResizing(true);
+	const handleMouseDown = (e: React.MouseEvent) => {
+		e.preventDefault();
+		setIsResizing(true);
+	};
 	return (
 		<div className={`@container relative ${bgColor} ${grow ? "grow" : ""} shrink-0 ` + additionalStyles} style={{ [dimension]: `${size}px` }}>
-			{!grow && <ResizableHandle isResizing={isResizing} isVertical={isVertical} handleMouseDown={handleMouseDown} direction={growDirection || "right"} />}
+			{!grow && (
+				<ResizableHandle
+					isResizing={isResizing}
+					isVertical={isVertical}
+					handleMouseDown={(e: React.MouseEvent) => handleMouseDown(e)}
+					direction={growDirection || "right"}
+				/>
+			)}
 			{children}
 		</div>
 	);
