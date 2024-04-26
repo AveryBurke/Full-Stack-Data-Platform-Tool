@@ -36,12 +36,14 @@ export class BackgroundRenderer {
 	}
 
 	private transition(selection: Selection<HTMLElement, Section, BaseType, unknown>) {
+
 		const { draw, interpolator, generator, current, onDrawEnd, duration } = this;
+		
 		const t = timer(function (elapsed) {
 			if (draw) draw();
 			if (elapsed > duration + 100) t.stop();
 		});
-        console.log("transition duration ", duration)
+
 		selection
 			.select("path")
 			.transition("update")
@@ -77,7 +79,6 @@ export class BackgroundRenderer {
 	}
 
     changeTransitionDuration(duration: number) {
-        console.log("changeTransitionDuration ", duration)
         this.duration = duration;
     }
 

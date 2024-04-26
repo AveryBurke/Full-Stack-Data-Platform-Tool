@@ -58,6 +58,7 @@ class BackgroundWorker {
 
 	updateRingHeights = (ringHeights: { [ring: string]: { innerRadius: number; outerRadius: number } }) => {
 		this.ringHeights = ringHeights;
+		console.log(this.ringHeights);
 		this.updateArcs();
 		this.queue.enqueue({ type: "transition", payload: this.arcs });
 	};
