@@ -1,3 +1,4 @@
+"use client";
 import { Selection, select } from "d3-selection";
 import { pie } from "d3-shape";
 import { pallet } from "../colorPallet";
