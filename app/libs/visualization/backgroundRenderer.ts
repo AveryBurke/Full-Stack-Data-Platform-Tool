@@ -1,6 +1,7 @@
 import { select, Selection, BaseType } from "d3-selection";
 import "d3-transition";
 import { timer } from "d3-timer";
+import { easeQuad } from "d3-ease";
 
 interface Section {
 	id: string;
@@ -40,15 +41,15 @@ export class BackgroundRenderer {
 		const { draw, interpolator, generator, current, onDrawEnd, duration } = this;
 		
 		const t = timer(function (elapsed) {
+			const el = Math.min(1, easeQuad(elapsed / (duration + 100)));
 			if (draw) draw();
-			if (elapsed > duration + 100) t.stop();
+			if (el === 1) t.stop();
 		});
 
 		selection
 			.select("path")
 			.transition("update")
 			.duration(duration)
-			// .ease(easePolyInOut.exponent(3))
 			.attr("opacity", 1)
 			.attrTween("d", function (a: Section) {
 				const from = { ...current[a.id] };

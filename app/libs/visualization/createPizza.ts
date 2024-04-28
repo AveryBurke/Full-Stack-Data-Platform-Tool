@@ -60,11 +60,10 @@ function createPizza() {
 					})
 				),
 				// slice color pallet
-				colorPallet = pallet(ringSet.length),
+				colorPallet = pallet(Math.max(sliceSet.length, 8)),
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
 				resetRings = false,
-				resetSlices = false
-
+				resetSlices = false;
 
 			const BWorker: Comlink.Remote<typeof BackgroundWorker> = Comlink.wrap(
 					new Worker(new URL("../../dedicated-workers/backgroundWorker.ts", import.meta.url), { type: "module" })
@@ -76,8 +75,7 @@ function createPizza() {
 			bacgroundWorker.dequeue();
 
 			// update handlers
-			updateData = () => {
-				console.log("update data ", data);
+			updateData = function () {
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));
 				ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length]));
 				sliceAngles = Object.fromEntries(
@@ -100,12 +98,12 @@ function createPizza() {
 				}, {});
 				bacgroundWorker.updateSliceAngles(sliceAngles);
 				bacgroundWorker.updateRingHeights(ringHeights);
-				bacgroundWorker.changeTransitionDuration((200/ringSet.length) + (200/sliceSet.length));
+				bacgroundWorker.changeTransitionDuration(200 / ringSet.length + 200 / sliceSet.length);
 				bacgroundWorker.dequeue();
 				bacgroundWorker.changeTransitionDuration(300);
-			};	
+			};
 
-			updateRingColumn = () => {
+			updateRingColumn = function () {
 				// Every ring is gets its own animated transition.
 				// This can be very slow for large ring sets.
 				// In theory, changing the duration for each ring transition to a precentage of half a resonable duration
@@ -134,9 +132,9 @@ function createPizza() {
 				resetRings = true;
 			};
 
-			updateRingSet = () => {
+			updateRingSet = function () {
 				if (resetRings) {
-					colorPallet = pallet(ringSet.length);
+					colorPallet = pallet(Math.max(ringSet.length, 8));
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
 					bacgroundWorker.updateSliceColors(sliceColors);
 					bacgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
@@ -179,7 +177,7 @@ function createPizza() {
 				bacgroundWorker.dequeue();
 			};
 
-			updateSliceColumn = () => {
+			updateSliceColumn = function () {
 				sliceValue = (d: any) => d[sliceColumn];
 				sliceCount = {};
 				sliceSet.forEach((slice) => {
@@ -191,12 +189,12 @@ function createPizza() {
 				resetSlices = true;
 			};
 
-			updateSliceSet = () => {	
+			updateSliceSet = function () {
 				if (resetSlices) {
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
 					});
-					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]))
+					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
 					bacgroundWorker.updateSliceColors(sliceColors);
 					bacgroundWorker.updateSliceAngles(sliceAngles);
 					resetSlices = false;
@@ -214,9 +212,7 @@ function createPizza() {
 				bacgroundWorker.updateSliceAngles(sliceAngles);
 				bacgroundWorker.dequeue();
 			};
-
 		});
-
 	}
 
 	chart.data = function (value: any) {

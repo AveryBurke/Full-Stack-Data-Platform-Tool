@@ -1,5 +1,4 @@
 import { renderHook, act } from "@testing-library/react";
-// import { useQueryStore } from "../useQueryStorage";
 import { useChartUpdates } from "../useChartUpdates";
 import { createPizza } from "../../libs/visualization/createPizza";
 import { usePizzaStateMock } from "../__mocks__/usePizzaState";
@@ -123,7 +122,7 @@ describe("useChartUpdates", () => {
 			act(() => {
 				filterStateResult.current.setFilterSet([
 					{ value: "test value a", filtered: false },
-					{ value: "test value c", filtered: true }, // simulate a use checking the filter
+					{ value: "test value c", filtered: true }, // simulate a user checking the filter
 				]);
 			});
 			expect(mockUpdateData).toHaveBeenCalledWith(testData.filter((d) => d.test !== "test value c"));

@@ -34,6 +34,9 @@ class BackgroundWorker {
 
 		const { document } = new (JSDOM as any)("<!DOCTYPE html><html><head></head><body></body></html>");
 		this.customElement = document.body.appendChild(document.createElement("custom"));
+		console.log("slice angles", sliceAngles);
+		console.log("ring heights", ringHeights);
+		console.log("slice colors", sliceColors);
 		this.ratio = ratio;
 		this.sliceAngles = sliceAngles;
 		this.ringHeights = ringHeights;
@@ -51,14 +54,15 @@ class BackgroundWorker {
 	}
 
 	updateSliceAngles = (sliceAngles: { [slice: string]: { startAngle: number; endAngle: number } }) => {
+		console.log("slice angles ", sliceAngles);
 		this.sliceAngles = sliceAngles;
 		this.updateArcs();
 		this.queue.enqueue({ type: "transition", payload: this.arcs });
 	};
 
 	updateRingHeights = (ringHeights: { [ring: string]: { innerRadius: number; outerRadius: number } }) => {
+		console.log("ring heights ", ringHeights);
 		this.ringHeights = ringHeights;
-		console.log(this.ringHeights);
 		this.updateArcs();
 		this.queue.enqueue({ type: "transition", payload: this.arcs });
 	};
