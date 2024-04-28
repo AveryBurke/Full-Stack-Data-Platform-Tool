@@ -1,6 +1,7 @@
 "use client";
 import { Selection, select } from "d3-selection";
 import { pie } from "d3-shape";
+import { easeQuadInOut } from "d3-ease";
 import { pallet } from "../colorPallet";
 import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
@@ -30,7 +31,8 @@ function createPizza() {
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
-				pieRadius = pieDiameter / 2;
+				pieRadius = pieDiameter / 2,
+				easeIdentity = (number: number) => number;
 			// accessors
 			let ringValue = (d: any) => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
@@ -180,6 +182,9 @@ function createPizza() {
 			updateSliceColumn = function () {
 				sliceValue = (d: any) => d[sliceColumn];
 				sliceCount = {};
+				// d3 easeQuadInOut causes jank when there are a lot of slices.
+				bacgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
+				bacgroundWorker.changeTransitionDuration(300);
 				sliceSet.forEach((slice) => {
 					sliceAngles[slice] = { startAngle: (Math.PI * 360) / 180, endAngle: (Math.PI * 360) / 180 };
 				});
@@ -191,6 +196,8 @@ function createPizza() {
 
 			updateSliceSet = function () {
 				if (resetSlices) {
+					// d3 easeQuadInOut causes jank when there are a lot of slices.
+					bacgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
 					});
@@ -210,6 +217,7 @@ function createPizza() {
 					})
 				);
 				bacgroundWorker.updateSliceAngles(sliceAngles);
+				bacgroundWorker.changeEase("easeIdentitiy")
 				bacgroundWorker.dequeue();
 			};
 		});

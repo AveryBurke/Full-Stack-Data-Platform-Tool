@@ -1,3 +1,4 @@
+import { d3EasingFunctions } from "@/app/libs/visualization/easings";
 export const models = [
 	"baseline_counts",
 	"baseline_measurements",
@@ -49,6 +50,7 @@ export const models = [
 	// "study_references",
 	// "study_searches",
 ] as const;
+
 interface Message<T> {
 	message: string;
 	payload: T;
@@ -60,18 +62,31 @@ interface SucesssMessage extends Message<{ data: any[]; query: string }> {
 	message: "success";
 }
 
-
-type QueueTaskType = "transition" | "time";
+type QueueTaskType = "transition" | "time" | "ease";
+type Ease =
+	| "easeIdentitiy"
+	| "easeLinear"
+	| "easeQuad"
+	| "easeQuadInAndOut"
+	| "easeCubic"
+	| "easePoly"
+	| "easeSin"
+	| "easeExp"
+	| "easeCircle"
+	| "easeBounce"
+	| "easeBack"
+	| "easeElastic";
 interface QueueTask<T extends QueueTaskType, P> {
 	type: T;
 	payload: P;
-
 }
 
 type TransitionQueueTask = QueueTask<"transition", Section[]>;
 type TimeQueueTask = QueueTask<"time", number>;
+type EaseQueueTask = QueueTask<"ease", Easing>;
 
 declare global {
+	type Easing = keyof typeof d3EasingFunctions;
 	type Section = {
 		id: string;
 		startAngle: number;
@@ -79,8 +94,8 @@ declare global {
 		innerRadius: number;
 		outerRadius: number;
 		fill: string;
-	}
-	type QueueJob = TransitionQueueTask | TimeQueueTask;
+	};
+	type QueueJob = TransitionQueueTask | TimeQueueTask | EaseQueueTask;
 	/**
 	 * the available models in the database. Not every table is available for querying.
 	 */
@@ -100,7 +115,7 @@ declare global {
 		| "get_refering_tables"
 		| "get_example_rows"
 		| "request_data_from_db";
-	type AvailableTools = {[key in Tool]?: (...args: string[]) => Promise<string>}
+	type AvailableTools = { [key in Tool]?: (...args: string[]) => Promise<string> };
 }
 
 export {};

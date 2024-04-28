@@ -1,16 +1,8 @@
 import { select, Selection, BaseType } from "d3-selection";
 import "d3-transition";
 import { timer } from "d3-timer";
-import { easeQuad } from "d3-ease";
+import { d3EasingFunctions } from "./easings";
 
-interface Section {
-	id: string;
-	innerRadius: number;
-	outerRadius: number;
-	startAngle: number;
-	endAngle: number;
-	fill: string;
-}
 
 export class BackgroundRenderer {
 	duration: number = 300;
@@ -22,6 +14,7 @@ export class BackgroundRenderer {
 	current: { [key: string]: Section } = {};
 	draw: (() => void) | null = null;
 	onDrawEnd: (() => void) | null = null;
+	ease: (normalizedTime: number) => number = (number) => number;
 
 	constructor(
 		curstomElement: HTMLElement,
@@ -38,10 +31,10 @@ export class BackgroundRenderer {
 
 	private transition(selection: Selection<HTMLElement, Section, BaseType, unknown>) {
 
-		const { draw, interpolator, generator, current, onDrawEnd, duration } = this;
+		const { draw, interpolator, generator, current, onDrawEnd, duration, ease } = this;
 		
 		const t = timer(function (elapsed) {
-			const el = Math.min(1, easeQuad(elapsed / (duration + 100)));
+			const el = Math.min(1, ease(elapsed / (duration + 100)));
 			if (draw) draw();
 			if (el === 1) t.stop();
 		});
@@ -82,6 +75,10 @@ export class BackgroundRenderer {
     changeTransitionDuration(duration: number) {
         this.duration = duration;
     }
+
+	changeEase(ease: Easing) {
+		this.ease = d3EasingFunctions[ease];
+	};
 
 	render() {
 		const { customElement, current } = this;
