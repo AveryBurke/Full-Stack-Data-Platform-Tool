@@ -62,7 +62,7 @@ function createPizza() {
 					})
 				),
 				// slice color pallet
-				colorPallet = pallet(Math.max(sliceSet.length, 8)),
+				colorPallet = pallet(Math.max(ringSet.length, 8)),
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
 				resetRings = false,
 				resetSlices = false;
@@ -70,11 +70,11 @@ function createPizza() {
 			const BWorker: Comlink.Remote<typeof BackgroundWorker> = Comlink.wrap(
 					new Worker(new URL("../../dedicated-workers/backgroundWorker.ts", import.meta.url), { type: "module" })
 				),
-				bacgroundWorker = await new BWorker(sliceAngles, ringHeights, ratio, sliceColors),
+				backgroundWorker = await new BWorker(sliceAngles, ringHeights, ratio, sliceColors),
 				offscreenBackgroundCanvas = backgroundCanvas.transferControlToOffscreen();
 
-			bacgroundWorker.transferCanvas(Comlink.transfer(offscreenBackgroundCanvas, [offscreenBackgroundCanvas]));
-			bacgroundWorker.dequeue();
+			backgroundWorker.transferCanvas(Comlink.transfer(offscreenBackgroundCanvas, [offscreenBackgroundCanvas]));
+			backgroundWorker.dequeue();
 
 			// update handlers
 			updateData = function () {
@@ -98,13 +98,13 @@ function createPizza() {
 					}
 					return acc;
 				}, {});
-				bacgroundWorker.updateSliceAngles(sliceAngles);
-				bacgroundWorker.updateRingHeights(ringHeights);
-				bacgroundWorker.changeEase("easeLinear")
-				bacgroundWorker.changeTransitionDuration((150 / ringSet.length) + (150 / sliceSet.length));
-				bacgroundWorker.dequeue();
-				bacgroundWorker.changeEase("easeIdentitiy");
-				bacgroundWorker.changeTransitionDuration(300);
+				backgroundWorker.updateSliceAngles(sliceAngles);
+				backgroundWorker.updateRingHeights(ringHeights);
+				backgroundWorker.changeEase("easeLinear");
+				backgroundWorker.changeTransitionDuration(150 / ringSet.length + 150 / sliceSet.length);
+				backgroundWorker.dequeue();
+				backgroundWorker.changeEase("easeIdentitiy");
+				backgroundWorker.changeTransitionDuration(300);
 			};
 
 			updateRingColumn = function () {
@@ -116,7 +116,7 @@ function createPizza() {
 				// This discrepancy could be cause by a large number of d3 transition updates happening in rapid succession.
 				// For now the solution is to chunk the ring transitions into a few group transitions, when the ring set is large.
 				let chunkSize = Math.max(Math.round(ringSet.length / 10), 1);
-				bacgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
+				backgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
 				ringValue = (d: any) => d[ringColumn];
 				const ringExistTransitions: { [ring: string]: { innerRadius: number; outerRadius: number } }[] = [];
 				for (let i = 0; i < ringSet.length; i += chunkSize) {
@@ -135,7 +135,7 @@ function createPizza() {
 					ringExistTransitions.push(ringExist);
 				}
 				ringExistTransitions.forEach((ringExit) => {
-					bacgroundWorker.updateRingHeights(ringExit);
+					backgroundWorker.updateRingHeights(ringExit);
 				});
 				ringCount = {};
 				ringHeights = {};
@@ -146,10 +146,10 @@ function createPizza() {
 				if (resetRings) {
 					colorPallet = pallet(Math.max(ringSet.length, 8));
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
-					bacgroundWorker.updateSliceColors(sliceColors);
-					bacgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
+					backgroundWorker.updateSliceColors(sliceColors);
+					backgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
 					ringHeights = Object.fromEntries(ringSet.map((ring) => [ring, { innerRadius: 0, outerRadius: 0 }]));
-					bacgroundWorker.updateRingHeights(ringHeights);
+					backgroundWorker.updateRingHeights(ringHeights);
 					ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length]));
 					const ringHeightEnterTransition: { [ring: string]: { innerRadius: number; outerRadius: number } }[] = [];
 
@@ -173,7 +173,7 @@ function createPizza() {
 					}
 
 					ringHeightEnterTransition.forEach((ringEnter) => {
-						bacgroundWorker.updateRingHeights(ringEnter);
+						backgroundWorker.updateRingHeights(ringEnter);
 					});
 					resetRings = false;
 				} else {
@@ -190,22 +190,22 @@ function createPizza() {
 						}
 						return acc;
 					}, {});
-					bacgroundWorker.updateRingHeights(ringHeights);
+					backgroundWorker.updateRingHeights(ringHeights);
 				}
-				bacgroundWorker.changeTransitionDuration(300);
-				bacgroundWorker.dequeue();
+				backgroundWorker.changeTransitionDuration(300);
+				backgroundWorker.dequeue();
 			};
 
 			updateSliceColumn = function () {
 				sliceValue = (d: any) => d[sliceColumn];
 				sliceCount = {};
 				// d3 ease functions causes jank when there are a lot of slices.
-				bacgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
-				bacgroundWorker.changeTransitionDuration(300);
+				backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
+				backgroundWorker.changeTransitionDuration(300);
 				sliceSet.forEach((slice) => {
 					sliceAngles[slice] = { startAngle: (Math.PI * 360) / 180, endAngle: (Math.PI * 360) / 180 };
 				});
-				bacgroundWorker.updateSliceAngles(sliceAngles);
+				backgroundWorker.updateSliceAngles(sliceAngles);
 				sliceAngles = {};
 				sliceCount = {};
 				resetSlices = true;
@@ -214,13 +214,13 @@ function createPizza() {
 			updateSliceSet = function () {
 				if (resetSlices) {
 					// d3 ease functions cause jank when there are a lot of slices.
-					bacgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
+					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
 					});
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
-					bacgroundWorker.updateSliceColors(sliceColors);
-					bacgroundWorker.updateSliceAngles(sliceAngles);
+					backgroundWorker.updateSliceColors(sliceColors);
+					backgroundWorker.updateSliceAngles(sliceAngles);
 					resetSlices = false;
 				}
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));
@@ -233,10 +233,10 @@ function createPizza() {
 						return [p.data, { startAngle, endAngle }];
 					})
 				);
-				bacgroundWorker.changeEase("easeCubicInOut");
-				bacgroundWorker.updateSliceAngles(sliceAngles);
-				bacgroundWorker.changeEase("easeIdentitiy");
-				bacgroundWorker.dequeue();
+				backgroundWorker.changeEase("easeCubicInOut");
+				backgroundWorker.updateSliceAngles(sliceAngles);
+				backgroundWorker.changeEase("easeIdentitiy");
+				backgroundWorker.dequeue();
 			};
 		});
 	}
