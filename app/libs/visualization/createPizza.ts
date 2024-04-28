@@ -100,8 +100,10 @@ function createPizza() {
 				}, {});
 				bacgroundWorker.updateSliceAngles(sliceAngles);
 				bacgroundWorker.updateRingHeights(ringHeights);
-				bacgroundWorker.changeTransitionDuration(200 / ringSet.length + 200 / sliceSet.length);
+				bacgroundWorker.changeEase("easeLinear")
+				bacgroundWorker.changeTransitionDuration((150 / ringSet.length) + (150 / sliceSet.length));
 				bacgroundWorker.dequeue();
+				bacgroundWorker.changeEase("easeIdentitiy");
 				bacgroundWorker.changeTransitionDuration(300);
 			};
 
@@ -211,7 +213,7 @@ function createPizza() {
 
 			updateSliceSet = function () {
 				if (resetSlices) {
-					// d3 ease functions causes jank when there are a lot of slices.
+					// d3 ease functions cause jank when there are a lot of slices.
 					bacgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
@@ -231,6 +233,7 @@ function createPizza() {
 						return [p.data, { startAngle, endAngle }];
 					})
 				);
+				bacgroundWorker.changeEase("easeCubicInOut");
 				bacgroundWorker.updateSliceAngles(sliceAngles);
 				bacgroundWorker.changeEase("easeIdentitiy");
 				bacgroundWorker.dequeue();
