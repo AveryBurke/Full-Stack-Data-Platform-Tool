@@ -4,6 +4,7 @@ import { createPizza } from "../../libs/visualization/createPizza";
 import { usePizzaStateMock } from "../__mocks__/usePizzaState";
 import { useFilterStateMock } from "../__mocks__/useFilterState";
 import { useFilterState } from "../useFilterState";
+import { testData } from "../../static/testData";
 
 const mockSliceColumn = jest.fn();
 const mockSliceSet = jest.fn();
@@ -24,21 +25,6 @@ jest.mock("../../libs/visualization/createPizza", () => ({
 		margin: { top: 0, right: 0, bottom: 0, left: 0 },
 	})),
 }));
-
-//todo: we need better test data and more sophisticated filter tests
-
-const testData = [
-	{ id: 1, test: "test value a", test2: "test value b" },
-	{ id: 2, test: "test value a", test2: "test value b" },
-	{ id: 3, test: "test value a", test2: "test value b" },
-	{ id: 4, test: "test value a", test2: "test value b" },
-	{ id: 5, test: "test value a", test2: "test value b" },
-	{ id: 6, test: "test value c", test2: "test value e" },
-	{ id: 7, test: "test value c", test2: "test value e" },
-	{ id: 8, test: "test value c", test2: "test value e" },
-	{ id: 9, test: "test value c", test2: "test value e" },
-	{ id: 10, test: "test value c", test2: "test value e" },
-];
 
 jest.mock("../useQueryStorage", () => ({
 	useQueryStore: () => ({ data: testData }),
@@ -66,10 +52,10 @@ describe("useChartUpdates", () => {
 			}); // 1
 			expect(mockRingColumn).not.toHaveBeenCalled();
 			act(() => {
-				pizzaStateResult.current.setRingKey("test");
+				pizzaStateResult.current.setRingKey("eaten");
 			}); // 2
-			expect(mockRingColumn).toHaveBeenCalledWith("test");
-			expect(mockRingSet).toHaveBeenCalledWith(["test value a", "test value c"]);
+			expect(mockRingColumn).toHaveBeenCalledWith("eaten");
+			expect(mockRingSet).toHaveBeenCalledWith(["cooked", "raw", "cooked or raw"]);
 		});
 	});
 
@@ -86,10 +72,10 @@ describe("useChartUpdates", () => {
 			}); // 1
 			expect(mockSliceColumn).not.toHaveBeenCalled();
 			act(() => {
-				pizzaStateResult.current.setSliceKey("test2");
+				pizzaStateResult.current.setSliceKey("type");
 			}); // 2
-			expect(mockSliceColumn).toHaveBeenCalledWith("test2");
-			expect(mockSliceSet).toHaveBeenCalledWith(["test value b", "test value e"]);
+			expect(mockSliceColumn).toHaveBeenCalledWith("type");
+			expect(mockSliceSet).toHaveBeenCalledWith(["vegetable", "fruit"]);
 		});
 	});
 
@@ -106,9 +92,11 @@ describe("useChartUpdates", () => {
 			}); // 1
 			expect(mockUpdateData).not.toHaveBeenCalled();
 			act(() => {
-				filterStateResult.current.setFilterKey("test");
+				filterStateResult.current.setFilterKey("color");
 			}); // 2
-			expect(filterStateResult.current.filterSet).toEqual(["test value a", "test value c"].map((value) => ({ value, filtered: false })));
+			expect(filterStateResult.current.filterSet).toEqual(
+				["red", "orange", "green", "yellow", "purple", "brown", "blue", "white", "black", "pink"].map((value) => ({ value, filtered: false }))
+			);
 		});
 
 		test("should filter the data and update the chart, when the filter set changes", () => {
@@ -117,15 +105,55 @@ describe("useChartUpdates", () => {
 				useChartUpdates(ref);
 			});
 			const { result: filterStateResult } = renderHook(() => useFilterState());
-			// we don't want to update state or the chart on the initial render
-			act(() => filterStateResult.current.setFilterKey("test"));
+			act(() => filterStateResult.current.setFilterKey("type"));
 			act(() => {
 				filterStateResult.current.setFilterSet([
-					{ value: "test value a", filtered: false },
-					{ value: "test value c", filtered: true }, // simulate a user checking the filter
+					{ value: "fruit", filtered: false },
+					{ value: "vegetable", filtered: true }, // simulate a user checking the filter
 				]);
 			});
-			expect(mockUpdateData).toHaveBeenCalledWith(testData.filter((d) => d.test !== "test value c"));
+			expect(mockUpdateData).toHaveBeenCalledWith(testData.filter((d) => d.type !== "vegetable"));
+		});
+
+		test("should update the ring and slice counts, when the data or filters change", () => {
+			const ref = { current: createPizza() };
+			const { result } = renderHook(() => {
+				useChartUpdates(ref);
+			});
+			const { result: pizzaStateResult } = renderHook(() => usePizzaStateMock());
+			const { result: filterStateResult } = renderHook(() => useFilterState());
+			act(() => pizzaStateResult.current.setRingKey("first render"));
+			act(() => pizzaStateResult.current.setSliceKey("first render"));
+			act(() => pizzaStateResult.current.setRingKey("type"));
+			act(() => pizzaStateResult.current.setSliceKey("eaten"));
+			act(() => filterStateResult.current.setFilterKey("type"));
+			act(() => {
+				filterStateResult.current.setFilterSet([
+					{ value: "fruit", filtered: false },
+					{ value: "vegetable", filtered: true }, // simulate a user checking the filter
+				]);
+			});
+			// check that the counts have a prev value of 0 and a current value of the filtered data
+			expect(pizzaStateResult.current.ringCounts).toEqual({ fruit: { current: 31, prev: 0 }, vegetable: { current: 0, prev: 0 } });
+			expect(pizzaStateResult.current.sliceCounts).toEqual({
+				cooked: { current: 0, prev: 0 },
+				"cooked or raw": { current: 2, prev: 0 },
+				raw: { current: 29, prev: 0 },
+			});
+
+			act(() => {
+				filterStateResult.current.setFilterSet([
+					{ value: "fruit", filtered: false },
+					{ value: "vegetable", filtered: false }, // simulate a user unchecking the filter
+				]);
+			});
+			// check that the counts have a previou values matching that matches the last test's current values and current values matching the unfiltered data
+			expect(pizzaStateResult.current.ringCounts).toEqual({ fruit: { current: 31, prev: 31 }, vegetable: { current: 11, prev: 0 } });
+			expect(pizzaStateResult.current.sliceCounts).toEqual({
+				cooked: { current: 4, prev: 0 },
+				"cooked or raw": { current: 6, prev: 2 },
+				raw: { current: 32, prev: 29 },
+			});
 		});
 	});
 });

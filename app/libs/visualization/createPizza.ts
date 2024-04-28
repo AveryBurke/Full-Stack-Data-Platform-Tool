@@ -64,6 +64,8 @@ function createPizza() {
 				// slice color pallet
 				colorPallet = pallet(Math.max(ringSet.length, 8)),
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
+
+				// flags
 				resetRings = false,
 				resetSlices = false;
 
@@ -114,7 +116,7 @@ function createPizza() {
 				// should make the total transition time reasonable.
 				// In practice, this is not the case when the ring set is over about 30 rings.
 				// This discrepancy could be cause by a large number of d3 transition updates happening in rapid succession.
-				// For now the solution is to chunk the ring transitions into a few group transitions, when the ring set is large.
+				// For now the solution is to chunk the ring transitions into a few groups when the ring set is large.
 				let chunkSize = Math.max(Math.round(ringSet.length / 10), 1);
 				backgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
 				ringValue = (d: any) => d[ringColumn];
