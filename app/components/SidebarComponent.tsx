@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, PropsWithChildren, ReactComponentElement } from "react";
+import React, { useState, useRef } from "react";
 import { useHeight } from "@/app/hooks/useHeight";
 import Select from "react-select";
 import { useSpring, animated } from "react-spring";
@@ -22,14 +22,7 @@ interface SidebarComponentWrapperProps {
 	handleReset: () => void;
 }
 
-const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({
-	currentKey,
-	title,
-	options,
-	children,
-	handleChange,
-	handleReset,
-}) => {
+const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset }) => {
 	const [heightOn, setHeightOn] = useState(false);
 	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
 	const uiReady = useRef(false);
@@ -108,10 +101,8 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({
 				onChange={(e) => (e ? handleChange(e.value) : console.log(e))}
 				id={`${title}_select`}
 			/>
-			<animated.div style={{  ...heightStyles, overflow: "hidden" }}>
-				<div ref={activateRef} >
-                    <div className={currentKey.length ? "" : "hidden"}>{children}</div>
-                </div>
+			<animated.div style={{ ...heightStyles, overflow: "hidden" }}>
+				<div ref={activateRef}>{currentKey.length ? children : null}</div>
 			</animated.div>
 		</div>
 	);

@@ -10,7 +10,6 @@ const page = () => {
 	const ref = useRef<HTMLDivElement>(null);
 	const refCanvas = useRef<HTMLCanvasElement>(null);
 	const { ringKey, sliceKey, sliceSet, ringSet } = usePizzaState();
-
 	const pizzaRef = useRef(createPizza());
 	useChartUpdates(pizzaRef);
 	const [render, setRender] = useState(false);
@@ -22,9 +21,11 @@ const page = () => {
 			pizzaRef.current.canvasHeight(refCanvas.current.height);
 			pizzaRef.current.data(data);
 			pizzaRef.current.sliceColumn(sliceKey);
-			pizzaRef.current.sliceSet(sliceSet);
+			//@ts-ignore
+			pizzaRef.current.sliceSet(sliceSet.map((slice) => slice ??= undefined));
 			pizzaRef.current.ringColumn(ringKey);
-			pizzaRef.current.ringSet(ringSet);
+			//@ts-ignore
+			pizzaRef.current.ringSet(ringSet.map((ring) => ring ??= undefined));
 			setRender(true);
 		}
 	}, []);

@@ -17,8 +17,6 @@ import { toast } from "react-hot-toast";
  * When the component mounts, it needs to fetch data from the server and initialize the sheet with the data from the state, preserving any changes made to the data from the spreadsheet.
  */
 const SheetWrapper = () => {
-	// const sideba = useSidebar();
-	// sideba.setComponent("spreadsheet");
 	const numberOfMounts = useRef(0);
 	const { query, setQuery, data, setData, onLoading, onFinish, isLoading } = useQueryStore();
 	const [sheetData, setSheetData] = useState<any[]>([]);

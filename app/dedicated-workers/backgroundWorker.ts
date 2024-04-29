@@ -50,7 +50,7 @@ class BackgroundWorker {
 		this.ctx = canvas.getContext("2d");
 	}
 
-	updateSliceAngles = (sliceAngles: { [slice: string]: { startAngle: number; endAngle: number } }) => {
+	updateSliceAngles = (sliceAngles: { [slice: string]: { startAngle: number; endAngle: number } }) => {;
 		this.sliceAngles = sliceAngles;
 		this.updateArcs();
 		this.queue.enqueue({ type: "transition", payload: this.arcs });
@@ -78,6 +78,10 @@ class BackgroundWorker {
                     this.backgroundRenderer.changeTransitionDuration(job.payload);
                     this.dequeue();
                     break;
+				case "ease":
+					this.backgroundRenderer.changeEase(job.payload);
+					this.dequeue();
+					break;
             }
         }
 	};
@@ -85,6 +89,10 @@ class BackgroundWorker {
     changeTransitionDuration = (duration: number) => {
         this.queue.enqueue({type: "time", payload: duration});
     };
+
+	changeEase = (ease: Easing) => {
+		this.queue.enqueue({ type: "ease", payload: ease});
+	};
 
 	queueSize = () => {
 		return this.queue.size();
