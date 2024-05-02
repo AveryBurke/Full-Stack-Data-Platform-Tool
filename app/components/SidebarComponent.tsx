@@ -4,7 +4,7 @@ import { useHeight } from "@/app/hooks/useHeight";
 import Select from "react-select";
 import { useSpring, animated } from "react-spring";
 import { easings } from "@react-spring/web";
-import camelToFlat from "@/app/libs/cameToFlat";
+import camelToFlat from "@/app/libs/camelToFlat";
 
 /**
  * create a sidebar component that manages one slice of state

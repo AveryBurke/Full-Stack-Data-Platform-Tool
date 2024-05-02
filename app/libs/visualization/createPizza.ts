@@ -1,10 +1,11 @@
 "use client";
 import { Selection, select } from "d3-selection";
 import { pie } from "d3-shape";
-import { easeQuadInOut } from "d3-ease";
+
 import { pallet } from "../colorPallet";
 import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
+import { FrameWorker } from "@/app/dedicated-workers/framWorker";
 
 function createPizza() {
 	let data: any[],
@@ -26,13 +27,12 @@ function createPizza() {
 	function chart(selection: Selection<HTMLDivElement, unknown, null, undefined>) {
 		selection.each(async function () {
 			const backgroundCanvas = select(this).select("#background").node() as HTMLCanvasElement,
-				// ctx = backgroundCanvas.getContext("2d"),
 				outsideHeight = margin.top + margin.bottom,
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
-				pieRadius = pieDiameter / 2,
-				easeIdentity = (number: number) => number;
+				pieRadius = pieDiameter / 2;
+
 			// accessors
 			let ringValue = (d: any) => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
@@ -64,22 +64,44 @@ function createPizza() {
 				// slice color pallet
 				colorPallet = pallet(Math.max(ringSet.length, 8)),
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
-
 				// flags
 				resetRings = false,
 				resetSlices = false;
 
+			// workers
+			const FWorker: Comlink.Remote<typeof FrameWorker> = Comlink.wrap(
+				new Worker(new URL("../../dedicated-workers/framWorker.ts", import.meta.url), { type: "module" })
+			);
+			const frameWorker = await new FWorker(sliceAngles, ringHeights, sliceColors);
 			const BWorker: Comlink.Remote<typeof BackgroundWorker> = Comlink.wrap(
 					new Worker(new URL("../../dedicated-workers/backgroundWorker.ts", import.meta.url), { type: "module" })
 				),
-				backgroundWorker = await new BWorker(sliceAngles, ringHeights, ratio, sliceColors),
+				backgroundWorker = await new BWorker(ratio),
 				offscreenBackgroundCanvas = backgroundCanvas.transferControlToOffscreen();
 
 			backgroundWorker.transferCanvas(Comlink.transfer(offscreenBackgroundCanvas, [offscreenBackgroundCanvas]));
-			backgroundWorker.dequeue();
+
+			const cb = (input: Section[][]) => {
+				backgroundWorker.addTransitions(input);
+				backgroundWorker.dequeue();
+			};
+
+			frameWorker.getFrames(Comlink.proxy(cb));
 
 			// update handlers
 			updateData = function () {
+				const cb = (input: Section[][]) => {
+					backgroundWorker.changeEase("easeLinear");
+					backgroundWorker.changeTransitionDuration(300/input.length);
+					backgroundWorker.addTransitions(input);
+					backgroundWorker.dequeue();
+					backgroundWorker.changeEase("easeIdentitiy");
+					backgroundWorker.changeTransitionDuration(300);
+				};
+				// When the data changes the slices and rings need to be updated.
+				// Many of the calculations are redundant, with those in the updateSliceSet and updateRingSet functions.
+				// Update data could simply call those functions.
+				// But doing the calculations here allows for batching the transitions to reduce jank.
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));
 				ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length]));
 				sliceAngles = Object.fromEntries(
@@ -100,25 +122,27 @@ function createPizza() {
 					}
 					return acc;
 				}, {});
-				backgroundWorker.updateSliceAngles(sliceAngles);
-				backgroundWorker.updateRingHeights(ringHeights);
-				backgroundWorker.changeEase("easeLinear");
-				backgroundWorker.changeTransitionDuration(150 / ringSet.length + 150 / sliceSet.length);
-				backgroundWorker.dequeue();
-				backgroundWorker.changeEase("easeIdentitiy");
-				backgroundWorker.changeTransitionDuration(300);
+				frameWorker.updateSliceAngles(sliceAngles);
+				frameWorker.updateRingHeights(ringHeights);
+				frameWorker.getFrames(Comlink.proxy(cb));
 			};
 
 			updateRingColumn = function () {
-				// Every ring should get its own animated transition.
+				// Unlike the slices the rings need to be transitioned one at a time.
+				// So Every ring should get its own animated transition.
 				// However, this can be very slow for large ring sets.
 				// In theory, changing the duration for each ring transition to a precentage of half a resonable duration
 				// should make the total transition time reasonable.
 				// In practice, this is not the case when the ring set is over about 30 rings.
 				// This discrepancy could be cause by a large number of d3 transition updates happening in rapid succession.
 				// For now the solution is to chunk the ring transitions into a few groups when the ring set is large.
+
+				const cb = (input: Section[][]) => {
+					backgroundWorker.changeTransitionDuration(Math.round(200 / input.length));
+					backgroundWorker.addTransitions(input);
+				};
+
 				let chunkSize = Math.max(Math.round(ringSet.length / 10), 1);
-				backgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
 				ringValue = (d: any) => d[ringColumn];
 				const ringExistTransitions: { [ring: string]: { innerRadius: number; outerRadius: number } }[] = [];
 				for (let i = 0; i < ringSet.length; i += chunkSize) {
@@ -137,24 +161,28 @@ function createPizza() {
 					ringExistTransitions.push(ringExist);
 				}
 				ringExistTransitions.forEach((ringExit) => {
-					backgroundWorker.updateRingHeights(ringExit);
+					frameWorker.updateRingHeights(ringExit);
 				});
+				frameWorker.getFrames(Comlink.proxy(cb));
 				ringCount = {};
 				ringHeights = {};
 				resetRings = true;
 			};
 
 			updateRingSet = function () {
+				const cb = (changDuration: boolean) => (input: Section[][]) => {
+					if (changDuration) backgroundWorker.changeTransitionDuration(Math.round(200 / input.length));
+					backgroundWorker.addTransitions(input);
+					backgroundWorker.dequeue();
+					backgroundWorker.changeTransitionDuration(300);
+				};
 				if (resetRings) {
 					colorPallet = pallet(Math.max(ringSet.length, 8));
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
-					backgroundWorker.updateSliceColors(sliceColors);
-					backgroundWorker.changeTransitionDuration(Math.round(200 / ringSet.length));
+					frameWorker.updateSliceColors(sliceColors);
 					ringHeights = Object.fromEntries(ringSet.map((ring) => [ring, { innerRadius: 0, outerRadius: 0 }]));
-					backgroundWorker.updateRingHeights(ringHeights);
 					ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length]));
 					const ringHeightEnterTransition: { [ring: string]: { innerRadius: number; outerRadius: number } }[] = [];
-
 					// See the comments in updateRingColumn for an explanation of the chunking.
 					const chunkSize = Math.max(Math.round(ringSet.length / 10), 1);
 					for (let i = 0; i < ringSet.length; i += chunkSize) {
@@ -173,11 +201,9 @@ function createPizza() {
 						}
 						ringHeightEnterTransition.push({ ...ringHeights });
 					}
-
 					ringHeightEnterTransition.forEach((ringEnter) => {
-						backgroundWorker.updateRingHeights(ringEnter);
+						frameWorker.updateRingHeights(ringEnter);
 					});
-					resetRings = false;
 				} else {
 					ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length]));
 					ringHeights = ringSet.reduce<{ [key: string]: { innerRadius: number; outerRadius: number } }>((acc, ring, i) => {
@@ -192,37 +218,49 @@ function createPizza() {
 						}
 						return acc;
 					}, {});
-					backgroundWorker.updateRingHeights(ringHeights);
+					frameWorker.updateRingHeights(ringHeights);
 				}
-				backgroundWorker.changeTransitionDuration(300);
-				backgroundWorker.dequeue();
+				frameWorker.getFrames(Comlink.proxy(cb(resetRings)));
+				resetRings = false;
 			};
 
 			updateSliceColumn = function () {
+				const cb  = (input: Section[][]) => {
+					backgroundWorker.changeTransitionDuration(200);
+					// d3 ease functions cause jank when there are a lot of slices.
+					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
+					backgroundWorker.addTransitions(input);
+				};
 				sliceValue = (d: any) => d[sliceColumn];
 				sliceCount = {};
-				// d3 ease functions causes jank when there are a lot of slices.
-				backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
-				backgroundWorker.changeTransitionDuration(300);
 				sliceSet.forEach((slice) => {
 					sliceAngles[slice] = { startAngle: (Math.PI * 360) / 180, endAngle: (Math.PI * 360) / 180 };
 				});
-				backgroundWorker.updateSliceAngles(sliceAngles);
+				frameWorker.updateSliceAngles(sliceAngles);
+				frameWorker.getFrames(Comlink.proxy(cb));
 				sliceAngles = {};
 				sliceCount = {};
 				resetSlices = true;
 			};
 
 			updateSliceSet = function () {
+				const cb = (input: Section[][]) => {
+						// d3 ease functions causes jank when there are a lot of slices.
+						backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
+						backgroundWorker.changeTransitionDuration(200);
+						backgroundWorker.addTransitions(input);
+						backgroundWorker.dequeue();
+						backgroundWorker.changeEase("easeIdentitiy");
+						backgroundWorker.changeTransitionDuration(300);
+				};
 				if (resetSlices) {
 					// d3 ease functions cause jank when there are a lot of slices.
-					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
 					});
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
-					backgroundWorker.updateSliceColors(sliceColors);
-					backgroundWorker.updateSliceAngles(sliceAngles);
+					frameWorker.updateSliceColors(sliceColors);
+					frameWorker.updateSliceAngles(sliceAngles);
 					resetSlices = false;
 				}
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));
@@ -235,10 +273,8 @@ function createPizza() {
 						return [p.data, { startAngle, endAngle }];
 					})
 				);
-				backgroundWorker.changeEase("easeCubicInOut");
-				backgroundWorker.updateSliceAngles(sliceAngles);
-				backgroundWorker.changeEase("easeIdentitiy");
-				backgroundWorker.dequeue();
+				frameWorker.updateSliceAngles(sliceAngles);
+				frameWorker.getFrames(Comlink.proxy(cb));
 			};
 		});
 	}

@@ -1,6 +1,5 @@
 import * as Comlink from "comlink";
 import { arc } from "d3-shape";
-// import colorPallet from "../libs/colorPallet";
 //@ts-ignore
 import { parseHTML } from "linkedom/worker";
 import { select } from "d3-selection";
@@ -10,24 +9,15 @@ import { Queue } from "../libs/queue";
 
 class BackgroundWorker {
 	ratio: number;
-	pallet: { [slice: string]: string[] } = {};
 	customElement: HTMLElement;
 	backgroundRenderer: BackgroundRenderer;
 	arcGenerator = arc<any>();
 	canavas: OffscreenCanvas | null = null;
 	ctx: OffscreenCanvasRenderingContext2D | null = null;
-	ringHeights: { [key: string]: { innerRadius: number; outerRadius: number } } = {};
-	sliceAngles: { [key: string]: { startAngle: number; endAngle: number } } = {};
-	sliceColors: { [key: string]: string } = {};
-	arcs: Section[] = [];
 	queue = new Queue<QueueJob>();
 
-	constructor(
-		sliceAngles: { [key: string]: { startAngle: number; endAngle: number } },
-		ringHeights: { [key: string]: { innerRadius: number; outerRadius: number } },
-		ratio: number = 1,
-		sliceColors: { [key: string]: string }
-	) {
+	constructor(ratio: number = 1) {
+
 		function JSDOM(html: string) {
 			return parseHTML(html);
 		}
@@ -35,13 +25,8 @@ class BackgroundWorker {
 		const { document } = new (JSDOM as any)("<!DOCTYPE html><html><head></head><body></body></html>");
 		this.customElement = document.body.appendChild(document.createElement("custom"));
 		this.ratio = ratio;
-		this.sliceAngles = sliceAngles;
-		this.ringHeights = ringHeights;
-		this.sliceColors = sliceColors;
-		this.updateArcs();
 		this.backgroundRenderer = new BackgroundRenderer(this.customElement, interpolate, arc(), this.dequeue);
 		this.backgroundRenderer.addDrawMethod(this.draw);
-		this.backgroundRenderer.updateData(this.arcs);
 		this.backgroundRenderer.render();
 	}
 
@@ -50,75 +35,45 @@ class BackgroundWorker {
 		this.ctx = canvas.getContext("2d");
 	}
 
-	updateSliceAngles = (sliceAngles: { [slice: string]: { startAngle: number; endAngle: number } }) => {;
-		this.sliceAngles = sliceAngles;
-		this.updateArcs();
-		this.queue.enqueue({ type: "transition", payload: this.arcs });
-	};
-
-	updateRingHeights = (ringHeights: { [ring: string]: { innerRadius: number; outerRadius: number } }) => {
-		this.ringHeights = ringHeights;
-		this.updateArcs();
-		this.queue.enqueue({ type: "transition", payload: this.arcs });
-	};
-
-	updateSliceColors = (sliceColors: { [slice: string]: string }) => {
-		this.sliceColors = sliceColors;
-	};
-
 	dequeue = () => {
 		const job = this.queue.dequeue();
-        if (job){
-            switch (job.type) {
-                case "transition":
-                    this.backgroundRenderer.updateData(job.payload);
-                    this.backgroundRenderer.render();
-                    break;
-                case "time":
-                    this.backgroundRenderer.changeTransitionDuration(job.payload);
-                    this.dequeue();
-                    break;
+		if (job) {
+			switch (job.type) {
+				case "transition":
+					this.backgroundRenderer.updateData(job.payload);
+					this.backgroundRenderer.render();
+					break;
+				case "time":
+					this.backgroundRenderer.changeTransitionDuration(job.payload);
+					this.dequeue();
+					break;
 				case "ease":
 					this.backgroundRenderer.changeEase(job.payload);
 					this.dequeue();
 					break;
-            }
-        }
+			}
+		}
 	};
 
-    changeTransitionDuration = (duration: number) => {
-        this.queue.enqueue({type: "time", payload: duration});
-    };
+	async getArcs(cb: (input: string) => void) {}
+
+	changeTransitionDuration = (duration: number) => {
+		this.queue.enqueue({ type: "time", payload: duration });
+	};
 
 	changeEase = (ease: Easing) => {
-		this.queue.enqueue({ type: "ease", payload: ease});
+		this.queue.enqueue({ type: "ease", payload: ease });
+	};
+
+	addTransitions = (transitions: Section[][]) => {
+		for (const transition of transitions) {
+			this.queue.enqueue({ type: "transition", payload: transition });
+		}
 	};
 
 	queueSize = () => {
 		return this.queue.size();
 	};
-
-	private updateArcs() {
-		const sliceSet = Object.keys(this.sliceAngles);
-		const ringSet = Object.keys(this.ringHeights);
-		this.arcs = sliceSet
-			.map((slice, i) => {
-				const { startAngle, endAngle } = this.sliceAngles[slice]!;
-				const pallet = this.sliceColors[slice];
-				return ringSet.map((ring, j) => {
-					const { innerRadius, outerRadius } = this.ringHeights[ring]!;
-					return {
-						id: `${ring}-${slice}`,
-						startAngle,
-						endAngle,
-						innerRadius,
-						outerRadius,
-						fill: pallet[j % pallet.length],
-					};
-				});
-			})
-			.flat();
-	}
 
 	draw = () => {
 		const { customElement, ctx, canavas, ratio } = this;
