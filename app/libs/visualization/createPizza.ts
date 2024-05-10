@@ -1,11 +1,12 @@
 "use client";
 import { Selection, select } from "d3-selection";
-import { pie } from "d3-shape";
+import { pie, arc } from "d3-shape";
 
 import { pallet } from "../colorPallet";
 import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
 import { FrameWorker } from "@/app/dedicated-workers/framWorker";
+import { ShapeWorker } from "@/app/dedicated-workers/shapeWorker";
 
 function createPizza() {
 	let data: any[],
@@ -27,12 +28,12 @@ function createPizza() {
 	function chart(selection: Selection<HTMLDivElement, unknown, null, undefined>) {
 		selection.each(async function () {
 			const backgroundCanvas = select(this).select("#background").node() as HTMLCanvasElement,
+				shapesCanvas = select(this).select("#shapes").node() as HTMLCanvasElement,
 				outsideHeight = margin.top + margin.bottom,
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
 				pieRadius = pieDiameter / 2;
-
 			// accessors
 			let ringValue = (d: any) => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
@@ -69,6 +70,12 @@ function createPizza() {
 				resetSlices = false;
 
 			// workers
+			const SWorker: Comlink.Remote<typeof ShapeWorker> = Comlink.wrap(
+				new Worker(new URL("../../dedicated-workers/shapeWorker.ts", import.meta.url), { type: "module" })
+			);
+			const shapeWorker = await new SWorker();
+			const offfscreenShapesCanvas = shapesCanvas.transferControlToOffscreen();
+			shapeWorker.transferCanvas(Comlink.transfer(offfscreenShapesCanvas, [offfscreenShapesCanvas]));
 			const FWorker: Comlink.Remote<typeof FrameWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/framWorker.ts", import.meta.url), { type: "module" })
 			);
@@ -81,7 +88,8 @@ function createPizza() {
 
 			backgroundWorker.transferCanvas(Comlink.transfer(offscreenBackgroundCanvas, [offscreenBackgroundCanvas]));
 
-			const cb = (input: Section[][]) => {
+			const cb = async (input: Section[][]) => {
+				shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 				backgroundWorker.addTransitions(input);
 				backgroundWorker.dequeue();
 			};
@@ -92,7 +100,7 @@ function createPizza() {
 			updateData = function () {
 				const cb = (input: Section[][]) => {
 					backgroundWorker.changeEase("easeLinear");
-					backgroundWorker.changeTransitionDuration(300/input.length);
+					backgroundWorker.changeTransitionDuration(300 / input.length);
 					backgroundWorker.addTransitions(input);
 					backgroundWorker.dequeue();
 					backgroundWorker.changeEase("easeIdentitiy");
@@ -225,7 +233,7 @@ function createPizza() {
 			};
 
 			updateSliceColumn = function () {
-				const cb  = (input: Section[][]) => {
+				const cb = (input: Section[][]) => {
 					backgroundWorker.changeTransitionDuration(200);
 					// d3 ease functions cause jank when there are a lot of slices.
 					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadOut" : "easeIdentitiy");
@@ -245,13 +253,13 @@ function createPizza() {
 
 			updateSliceSet = function () {
 				const cb = (input: Section[][]) => {
-						// d3 ease functions causes jank when there are a lot of slices.
-						backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
-						backgroundWorker.changeTransitionDuration(200);
-						backgroundWorker.addTransitions(input);
-						backgroundWorker.dequeue();
-						backgroundWorker.changeEase("easeIdentitiy");
-						backgroundWorker.changeTransitionDuration(300);
+					// d3 ease functions causes jank when there are a lot of slices.
+					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
+					backgroundWorker.changeTransitionDuration(200);
+					backgroundWorker.addTransitions(input);
+					backgroundWorker.dequeue();
+					backgroundWorker.changeEase("easeIdentitiy");
+					backgroundWorker.changeTransitionDuration(300);
 				};
 				if (resetSlices) {
 					// d3 ease functions cause jank when there are a lot of slices.

@@ -22,10 +22,10 @@ const page = () => {
 			pizzaRef.current.data(data);
 			pizzaRef.current.sliceColumn(sliceKey);
 			//@ts-ignore
-			pizzaRef.current.sliceSet(sliceSet.map((slice) => slice ??= undefined));
+			pizzaRef.current.sliceSet(sliceSet.map((slice) => (slice ??= undefined)));
 			pizzaRef.current.ringColumn(ringKey);
 			//@ts-ignore
-			pizzaRef.current.ringSet(ringSet.map((ring) => ring ??= undefined));
+			pizzaRef.current.ringSet(ringSet.map((ring) => (ring ??= undefined)));
 			setRender(true);
 		}
 	}, []);
@@ -37,7 +37,15 @@ const page = () => {
 	}, [render, select, ref.current]);
 
 	return (
-		<div ref={ref} className="p-4">
+		<div ref={ref} className="relative p-4">
+			<div className="absolute z-1 pr-4">
+				<canvas
+					id="shapes"
+					width={1280 * window.devicePixelRatio}
+					height={720 * window.devicePixelRatio}
+					className="w-full h-full bg-transparent aspect-video"
+				/>
+			</div>
 			<canvas
 				ref={refCanvas}
 				id="background"
