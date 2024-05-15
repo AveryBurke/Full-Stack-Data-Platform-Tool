@@ -29,13 +29,14 @@ function createPizza() {
 		selection.each(async function () {
 			const backgroundCanvas = select(this).select("#background").node() as HTMLCanvasElement,
 				shapesCanvas = select(this).select("#shapes").node() as HTMLCanvasElement,
+				webglCanvas = select(this).select("#webgl").node() as HTMLCanvasElement,
 				outsideHeight = margin.top + margin.bottom,
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
 				pieRadius = pieDiameter / 2;
 			// accessors
-			let ringValue = (d: any) => d[ringColumn],
+			let ringValue = (d: any):string => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
 				// metrics
 				ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length])),
@@ -75,7 +76,9 @@ function createPizza() {
 			);
 			const shapeWorker = await new SWorker();
 			const offfscreenShapesCanvas = shapesCanvas.transferControlToOffscreen();
-			shapeWorker.transferCanvas(Comlink.transfer(offfscreenShapesCanvas, [offfscreenShapesCanvas]));
+			const offScreenGLCanvas = webglCanvas.transferControlToOffscreen();
+			shapeWorker.transferShapeCanvas(Comlink.transfer(offfscreenShapesCanvas, [offfscreenShapesCanvas]));
+			shapeWorker.transferGLCanvas(Comlink.transfer(offScreenGLCanvas, [offScreenGLCanvas]));
 			const FWorker: Comlink.Remote<typeof FrameWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/framWorker.ts", import.meta.url), { type: "module" })
 			);
@@ -89,9 +92,12 @@ function createPizza() {
 			backgroundWorker.transferCanvas(Comlink.transfer(offscreenBackgroundCanvas, [offscreenBackgroundCanvas]));
 
 			const cb = async (input: Section[][]) => {
-				shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 				backgroundWorker.addTransitions(input);
 				backgroundWorker.dequeue();
+				for (const section of input[input.length - 1]) {
+					section.count = data.filter((d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)).length;
+				}
+				shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 			};
 
 			frameWorker.getFrames(Comlink.proxy(cb));
@@ -107,7 +113,7 @@ function createPizza() {
 					backgroundWorker.changeTransitionDuration(300);
 				};
 				// When the data changes the slices and rings need to be updated.
-				// Many of the calculations are redundant, with those in the updateSliceSet and updateRingSet functions.
+				// Many of the calculations are redundant with those in the updateSliceSet and updateRingSet functions.
 				// Update data could simply call those functions.
 				// But doing the calculations here allows for batching the transitions to reduce jank.
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));

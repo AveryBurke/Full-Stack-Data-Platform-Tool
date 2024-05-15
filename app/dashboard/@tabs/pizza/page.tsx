@@ -38,13 +38,21 @@ const page = () => {
 
 	return (
 		<div ref={ref} className="relative p-4">
-			<div className="absolute z-1 pr-4">
+			<div className="absolute z-2 pr-4">
+			<canvas
+					// ref={refCanvas}
+					id="webgl"
+					width={1280 * window.devicePixelRatio}
+					height={720 * window.devicePixelRatio}
+					className="absolute w-full h-full z-0 bg-transparent aspect-video"
+				/>
 				<canvas
 					id="shapes"
 					width={1280 * window.devicePixelRatio}
 					height={720 * window.devicePixelRatio}
-					className="w-full h-full bg-transparent aspect-video"
+					className="w-full h-full z-3 bg-transparent aspect-video"
 				/>
+				
 			</div>
 			<canvas
 				ref={refCanvas}

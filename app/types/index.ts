@@ -94,6 +94,9 @@ declare global {
 		innerRadius: number;
 		outerRadius: number;
 		fill: string;
+		slice: string;
+		ring: string;
+		count?: number;
 	};
 	type QueueJob = TransitionQueueTask | TimeQueueTask | EaseQueueTask;
 	/**

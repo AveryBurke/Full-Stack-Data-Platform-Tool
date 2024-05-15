@@ -82,8 +82,8 @@ class BackgroundWorker {
 			const canvasHeight = canavas.height;
 			ctx.save();
 			ctx.clearRect(0, 0, canvasWidth * ratio, canvasHeight * ratio);
-			ctx.lineWidth = 0.75;
-			ctx.setTransform(1, 0, 0, 1, Math.floor(canvasWidth) / 2, Math.floor(canvasHeight) / 2);
+			// ctx.lineWidth = 0.75;
+			ctx.setTransform(1, 0, 0, 1, canvasWidth / 2, canvasHeight / 2);
 			select(customElement)
 				.selectAll("custom.section")
 				.each(function (d: any, i) {

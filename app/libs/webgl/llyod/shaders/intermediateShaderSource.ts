@@ -12,7 +12,7 @@
  * | 0 | 2 | 2 | 2 |  ->  | (2, 0, 1) | (0, 0, 0) | (6, 6, 3) |
  * | 2 | 2 | 2 | 2 |  ->  | (0, 0, 0) | (0, 0, 0) | (12, 6, 4) |
  * @comment
- * The color at coordiante (1, 0) was calculated by all adding the coordinates of all the pixels in the voronoi cell with ID 1 at y = 0, in the vornoi texture.
+ * The color at coordiante (1, 0) was calculated by adding all the coordinates of all the pixels in the voronoi cell with ID 1 at y = 0, in the vornoi texture.
  * (2, 0) + (3, 0) = (2 + 3, 0 + 0, 2) = (5, 0, 2), where the 2 at the end is the number of pixels summed..
  * These columns will be summed by the next shader to get the center of mass of each voronoi cell, which will be used to update the voronoi texture.
  * See transformFeedbackShaderSource.ts for more information.

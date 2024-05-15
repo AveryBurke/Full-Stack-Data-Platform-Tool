@@ -55,6 +55,8 @@ class FrameWorker {
 						endAngle,
 						innerRadius,
 						outerRadius,
+						slice,
+						ring,
 						fill: pallet[j % pallet.length],
 					};
 				});
