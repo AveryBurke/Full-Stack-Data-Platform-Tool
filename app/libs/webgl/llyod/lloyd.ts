@@ -251,9 +251,9 @@ export class Lloyd {
 		this.gl.clearBufferiv(this.gl.COLOR, 0, new Int32Array([-1, 0, 0, 0]));
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, this.stencil.length / this.stencilBufferInfo.attribs!.a_position!.numComponents!);
 		this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-		// const debugColors: number[] = [];
+		// const debugColors: number[] = [] 
 		// const arcIds = new Set(this.offsetArcIds);
-		// for (let i = 0; i < 100; i++) {
+		// for (let i = 0; i < 200; i++) {
 		// 	debugColors.push(Math.random(), Math.random(), Math.random());
 		// }
 		// this.debug("u_stencil", this.stencilFrameBufferInfo.attachments[0], debugColors)
@@ -293,7 +293,7 @@ export class Lloyd {
 			// for (let i = 0; i < (this.vornoiBufferArrays.a_position.data.length / this.vornoiBufferArrays.a_position.numComponents) + 1; i++){
 			// 	debugColors.push(Math.random(), Math.random(), Math.random())
 			// }
-			// console.log("debug colors", debugColors)
+			// // console.log("debug colors", debugColors)
 			// this.debug("u_vornoi", this.vornoiFrameBufferInfo.attachments[0], debugColors)
 		}
 	}
@@ -411,7 +411,7 @@ export class Lloyd {
 	}
 
 	render() {
-		const debugColors: number[] = [];
+		// const debugColors: number[] = [];
 		// const numberOfArcs = new Set(this.offsetArcIds)
 		// for (let i = 0; i < numberOfArcs.size + 1; i++) {
 		//     debugColors.push(Math.random(), Math.random(), Math.random())

@@ -1,15 +1,23 @@
 import svgPathCommander from "svg-path-commander";
 import partitionNumber from "../static/particianNumber";
+import { ShapeRenderer } from "../libs/visualization/shapeRenderer";
 import { Lloyd } from "@/app/libs/webgl/llyod/lloyd";
-import { stencilShaderSource } from "@/app/libs/webgl/llyod/shaders/stencilShaderSource";
+import { select } from "d3-selection";
+//@ts-ignore
+import { parseHTML } from "linkedom/worker";
+
 import earcut from "earcut";
 import * as Comlink from "comlink";
 // import * as twgl from "twgl.js";
 class ShapeWorker {
+	customElement: HTMLElement;
+	shapeRenderer: InstanceType<typeof ShapeRenderer>;
 	lloyd: InstanceType<typeof Lloyd> | null = null;
 	seeds: number[] = [];
 	stream = false;
 	positions: number[] = [];
+	shapeIds: string[] = []; // these should be sorted according to slice and ring
+	shapeData: { x: number; y: number; d: string; fill: string; id: string }[] = [];
 	seedBoundryIds: number[] = [];
 	sections: Section[] = [];
 	sectionIntegerIds: { [sectionID: string]: number } = {};
@@ -31,18 +39,28 @@ class ShapeWorker {
 		-1.0, -1.0, 1.0, -1.0, 1.0, 1.0,
 	]);
 
-	constructor() {};
+	constructor() {
+		function JSDOM(html: string) {
+			return parseHTML(html);
+		}
+		// create a fake document with a custom element and initilize the shapeRenderer
+		const { document } = new (JSDOM as any)("<!DOCTYPE html><html><head></head><body></body></html>");
+		this.customElement = document.body.appendChild(document.createElement("custom"));
+		this.shapeRenderer = new ShapeRenderer(this.customElement, (d: any) => d.d, this.draw);
+	}
 
 	// this is a slow meothd. Think about streaming these results to voronoi generator.
 	// look at some of the methods here https://stackoverflow.com/questions/37576685/using-async-await-with-a-foreach-loop
 	addSections = async (sections: Section[], generator: any) => {
 		this.sections = sections;
+		this.sectionIntegerIds = {};
+		this.boundries = {};
 		const toRemove: number[] = [];
 		const subsections: Section[] = [];
 		// add subsection
 		for (let i = 0; i < this.sections.length; i++) {
 			const section = this.sections[i];
-			if (section.count && section.count > 10) {
+			if (section.count && section.count > 300) {
 				const partitions = partitionNumber(section.count, Math.ceil(section.count / 20));
 				if (partitions) {
 					const { startAngle, endAngle, innerRadius, outerRadius, id } = section;
@@ -90,20 +108,27 @@ class ShapeWorker {
 			this.boundries[section.id] = triangles;
 		}
 		// this.renderStencil();
-		this.seedSections();
+		// this.seedSections();
 		if (this.lloyd) {
 			this.lloyd.updateStencil(Object.values(this.boundries).flat());
 			this.lloyd.renderStencil();
-			console.log("seedBoundryIds", new Set(this.seedBoundryIds));
-			this.lloyd.renderInChunks(this.seeds, this.seedBoundryIds);
 			// this.lloyd.render();
 		}
 	};
 
+	updateShapeData(shapeIds: string[]) {
+		this.shapeIds = shapeIds;
+		// console.log("shapeIds ", this.shapeIds);
+		this.seedSections();
+		// console.log("seeds ", this.seeds);
+		this.lloyd?.renderInChunks(this.seeds, this.seedBoundryIds);
+	}
+
 	seedSections = () => {
 		const seeds: number[] = [];
+		const seedBoundryIds: number[] = [];
 		for (const section of this.sections) {
-			console.log("seeding section ", section.id)
+			console.log("seeding section ", section.id, this.sectionIntegerIds[section.id])
 			const id = this.sectionIntegerIds[section.id];
 			const { startAngle, endAngle, innerRadius, outerRadius, count } = section;
 			const arcCount = count || 0;
@@ -113,10 +138,14 @@ class ShapeWorker {
 					x = Math.cos(randomClampedTheta) * randomClampedR,
 					y = Math.sin(randomClampedTheta) * randomClampedR;
 				seeds.push((x / this.containerWidth) * 2, -(y / this.containerHeight) * 2); // <-- is the 2 here on account of the pxd?
-				this.seedBoundryIds.push(id);
+				seedBoundryIds.push(id);
 			}
+			console.log("after seeding boundry ids look like this ", seedBoundryIds);
 		}
+		this.seedBoundryIds = seedBoundryIds;
 		this.seeds = seeds;
+		console.log("section ids ", this.sectionIntegerIds)
+		console.log("seedBoundryIds ", new Set(this.seedBoundryIds));
 	};
 
 	transferGLCanvas = (canvas: OffscreenCanvas) => {
@@ -133,97 +162,71 @@ class ShapeWorker {
 		this.ctx = canvas.getContext("2d");
 	};
 
-	/**
-	 * render the background polygones to a uint texture. Each poly gone will be colored accroding to its unique integer id
-	 */
-	renderStencil() {
-		// if (!this.gl || !this.canvas) {
-		// 	return;
-		// }
-		// let stencil: number[] = [];
-		// this.sections.forEach((section, i) => {
-		// 	// i is the id of the section, for now. Next step is to assign unique integer ids to each section id.
-		// 	stencil.push(...this.boundries[section.id]);
-		// });
-		// const stencilProgram = twgl.createProgramInfo(this.gl, [stencilShaderSource.vertex, stencilShaderSource.fragment], {
-		// 	attribLocations: {
-		// 		a_position: 0,
-		// 	},
-		// });
-		// const stencilBufferArrays = {
-		// 	a_position: {
-		// 		numComponents: 3,
-		// 		data: new Float32Array(stencil.flat()),
-		// 		drawType: this.gl.STATIC_DRAW,
-		// 	},
-		// };
-		// const debugColors = [];
-		// for (let i = 0; i < Object.keys(this.sections).length; i++) {
-		// 	debugColors.push(Math.random(), Math.random(), Math.random());
-		// }
-		// const stencilBufferInfo = twgl.createBufferInfoFromArrays(this.gl, stencilBufferArrays);
-		// const stencilFrameBufferInfo = twgl.createFramebufferInfo(
-		// 	this.gl,
-		// 	[
-		// 		//we only need 1 and 0 for the stencil.
-		// 		{
-		// 			internalFormat: this.gl.R32I,
-		// 			format: this.gl.RED_INTEGER,
-		// 			type: this.gl.INT,
-		// 			minMag: this.gl.NEAREST,
-		// 		},
-		// 	],
-		// 	this.textureWidth,
-		// 	this.textureHeight
-		// );
-		// this.gl.useProgram(stencilProgram.program);
-		// twgl.setBuffersAndAttributes(this.gl, stencilProgram, stencilBufferInfo);
-		// //set the background 'color' to -1//
-		// this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, stencilFrameBufferInfo.framebuffer);
-		// this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, stencilFrameBufferInfo.attachments[0], 0);
-		// this.gl.viewport(0, 0, this.textureWidth, this.textureHeight);
-		// this.gl.clearBufferiv(this.gl.COLOR, 0, new Int32Array([-1, 0, 0, 0]));
-		// this.gl.drawArrays(this.gl.TRIANGLES, 0, stencil.length / stencilBufferInfo.attribs!.a_position!.numComponents!);
-		// this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-		// this.debug("u_stencil", stencilFrameBufferInfo.attachments[0], debugColors); ,
-	}
-
 	handlePositions = ({ keepOpen, payload }: { keepOpen: boolean; payload: Float32Array }) => {
-		// // start a new stream and clear the positions array
-		if (keepOpen && !this.stream) this.positions = [];
+		// // // start a new stream and clear the positions array
+		if (keepOpen && !this.stream) {
+			this.positions = [];
+			this.shapeData = [];
+			// console.log("streaming ");
+		}
+		
 		if (keepOpen) this.stream = true;
 		if (this.stream) {
 			this.positions = [...this.positions, ...payload];
-			this.draw();
+			// console.log("positions ", this.positions);
+			let id = 0;
+			for (let i = 0; i < this.positions.length; i += 2) {
+				const x = this.positions[i]
+				const y = this.positions[i + 1]
+				this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
+				id++;
+			}
+			// console.log("shapeData ", this.shapeData);
+			this.shapeRenderer.updateShapes(this.shapeData);
+			// this.draw();
 		}
 		// close the stream
 		if (!keepOpen) {
 			this.stream = false;
 			this.positions = [...this.positions, ...payload];
-			this.draw();
+			// console.log("positions ", this.positions);
+			let id = 0;
+			for (let i = 0; i < this.positions.length; i += 2) {
+				const x = this.positions[i]
+				const y = this.positions[i + 1]
+				this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
+				id++;
+			}
+			// console.log("shapeData ", this.shapeData);	
+			this.shapeRenderer.updateShapes(this.shapeData);
+			// this.draw();
 		}
-	}
+	};
 
-	draw(){
-		if (!this.ctx || !this.shapeCanvas) {
-			return;
-		}
+	draw = () => {
+		if (!this.ctx || !this.shapeCanvas || !this.pxd || !this.containerWidth || !this.containerHeight) return;
+
 		// console.log("drawing ", this.positions);
-		const { ctx, shapeCanvas } = this;
+		const { ctx, shapeCanvas, pxd, customElement, containerWidth, containerHeight } = this;
+		ctx.globalAlpha = 1;
 		ctx.save();
-		ctx.clearRect(0, 0, shapeCanvas.width, shapeCanvas.height);
+		ctx.clearRect(0, 0, shapeCanvas.width * pxd, shapeCanvas.height * pxd);
 		ctx.lineWidth = 0.75;
-		
-		for (let i = 0; i < this.positions.length; i += 2) {
-			const x = this.positions[i] * this.containerWidth
-			const y = this.positions[i + 1] * this.containerHeight;
-			// const id = this.positions[i + 2];
-			ctx.setTransform(this.pxd, 0, 0, this.pxd, x/2 + shapeCanvas.width/2, -y/2 + shapeCanvas.height/2);
-			ctx.fillStyle = "green";
-			ctx.beginPath();
-			ctx.arc(0, 0, 5, 0, 2 * Math.PI);
-			ctx.fill();
-		}
+		select(customElement)
+			.selectAll("custom.shape")
+			.each(function (d: any, i) {
+				const path = select(this).select("path");
+				const x = +path.attr("x");
+				const y = +path.attr("y");
+				const fill = path.attr("fill");
+				// const opacity = path.attr("opacity");
+				// ctx.globalAlpha = +opacity;
+				ctx.setTransform(pxd, 0, 0, pxd, (x * containerWidth) / 2 + shapeCanvas.width / 2, -(y * containerHeight) / 2 + shapeCanvas.height / 2);
+				ctx.fillStyle = fill;
+				ctx.beginPath();
+				ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+				ctx.fill();
+			});
 		ctx.restore();
 	};
 

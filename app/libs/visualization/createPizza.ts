@@ -36,7 +36,7 @@ function createPizza() {
 				pieDiameter = diameterRatio * insideHeight,
 				pieRadius = pieDiameter / 2;
 			// accessors
-			let ringValue = (d: any):string => d[ringColumn],
+			let ringValue = (d: any): string => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
 				// metrics
 				ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length])),
@@ -69,7 +69,10 @@ function createPizza() {
 				// flags
 				resetRings = false,
 				resetSlices = false;
-
+		
+			// sort data according to the slice and ring sets
+			data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+	
 			// workers
 			const SWorker: Comlink.Remote<typeof ShapeWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/shapeWorker.ts", import.meta.url), { type: "module" })
@@ -95,9 +98,12 @@ function createPizza() {
 				backgroundWorker.addTransitions(input);
 				backgroundWorker.dequeue();
 				for (const section of input[input.length - 1]) {
-					section.count = data.filter((d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)).length;
+					section.count = data.filter(
+						(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+					).length;
 				}
-				shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+				await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+				shapeWorker.updateShapeData(data.map(d => d[primaryColumn]));
 			};
 
 			frameWorker.getFrames(Comlink.proxy(cb));
@@ -246,6 +252,7 @@ function createPizza() {
 					backgroundWorker.addTransitions(input);
 				};
 				sliceValue = (d: any) => d[sliceColumn];
+				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
 				sliceCount = {};
 				sliceSet.forEach((slice) => {
 					sliceAngles[slice] = { startAngle: (Math.PI * 360) / 180, endAngle: (Math.PI * 360) / 180 };
@@ -258,7 +265,8 @@ function createPizza() {
 			};
 
 			updateSliceSet = function () {
-				const cb = (input: Section[][]) => {
+				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				const cb = async (input: Section[][]) => {
 					// d3 ease functions causes jank when there are a lot of slices.
 					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
 					backgroundWorker.changeTransitionDuration(200);
@@ -266,8 +274,16 @@ function createPizza() {
 					backgroundWorker.dequeue();
 					backgroundWorker.changeEase("easeIdentitiy");
 					backgroundWorker.changeTransitionDuration(300);
+					for (const section of input[input.length - 1]) {
+						section.count = data.filter(
+							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+						).length;
+					}
+					await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+					shapeWorker.updateShapeData(data.map(d => d[primaryColumn]));
 				};
 				if (resetSlices) {
+					data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
 					// d3 ease functions cause jank when there are a lot of slices.
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
@@ -296,6 +312,11 @@ function createPizza() {
 	chart.data = function (value: any) {
 		data = value;
 		if (typeof updateData === "function") updateData();
+		return chart;
+	};
+
+	chart.primaryColumn = function (value: string) {
+		primaryColumn = value;
 		return chart;
 	};
 
