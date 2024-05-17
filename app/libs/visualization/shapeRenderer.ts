@@ -4,7 +4,7 @@ import { timer } from "d3-timer";
 import { d3EasingFunctions } from "./easings";
 export class ShapeRenderer {
 	shapes: { x: number; y: number; d: string; fill: string; id: string }[] = [];
-	duration: number = 300;
+	duration: number = 250;
 	exitDuration: number = 0;
 	customElement: HTMLElement;
 	generator: (d: any) => string | null;
@@ -13,7 +13,6 @@ export class ShapeRenderer {
 	customClass = "shape";
 
 	constructor(curstomElement: HTMLElement, generator: (d: any) => string | null, draw: (() => void) | null, customClass?: string) {
-		// console.log("ShapeRenderer constructor ", curstomElement, generator, draw);
 		this.customElement = curstomElement;
 		this.generator = generator;
 		this.draw = draw;
@@ -30,11 +29,11 @@ export class ShapeRenderer {
 
 		const dataBinding = select(customElement)
 			.selectAll<HTMLElement, { x: number; y: number; fill: string; d: string; id: string }>(`custom.${customClass}`)
+			// .data(this.shapes)
 			.data(this.shapes, function (d) {
 				return d.id || select(this).attr("id");
 			});
-
-		this.transition(dataBinding);
+		// don't exit until the transition is complete
 
 		dataBinding
 			.enter()
@@ -42,16 +41,21 @@ export class ShapeRenderer {
 			.classed(customClass, true)
 			.attr("id", (d) => d.id)
 			.append("path")
-            .attr("x", (d) => d.x)
-            .attr("y", (d) => d.y)
+			.attr("x", (d) => d.x)
+			.attr("y", (d) => d.y)
 			.attr("fill", (d) => d.fill)
 			.attr("d", (d) => this.generator(d) || "")
 			.attr("opacity", 0);
 
-		// don't exit until the transition is complete
+		this.transition(dataBinding);
+
 		setTimeout(() => {
 			dataBinding
 				.exit()
+				.selectAll("path")
+				.transition()
+				.duration(this.duration)
+                .attr("opacity", 0)
 				// .each(function () {
 				// 	const id = select(this).attr("id");
 				// 	delete current[id];
@@ -67,34 +71,17 @@ export class ShapeRenderer {
 			if (draw) draw();
 			if (el === 1) t.stop();
 		});
-        selection
-            .select("path")
-            .transition("update")
-            .duration(duration)
-            .attr("x", (d) => d.x)
-            .attr("y", (d) => d.y)
-            .attr("fill", (d) => d.fill)
-            .attr("opacity", 1)
 		// Note: This does not include a transition for the size and shape of the path.
 		// That will include attTween("d", ...) and a generator function an interpolator function
 		// and a current object to keep track of the current state of the path
-		// selection
-		// 	.select("path")
-		// 	.transition("update")
-		// 	.duration(duration)
-		// 	.attr("opacity", 1)
-		// 	.attr("transform", (d) => `translate(${d.x},${d.y})`)
-		// 	.attr("fill", (d) => d.fill);
-		// .end()
-		// .catch(() => {
-		//     console.log("rejected ");
-		// })
-		// .then(() => {
-		//     selection.each(function (d) {
-		//         // current[d.id] = d;
-		//     });
-		//     draw && draw();
-		// });
+		selection
+			.select("path")
+			.transition()
+			.duration(duration)
+			.attr("x", (d) => d.x)
+			.attr("y", (d) => d.y)
+			.attr("fill", (d) => d.fill)
+			.attr("opacity", 1);
 	}
 
 	changeEase(ease: Easing) {

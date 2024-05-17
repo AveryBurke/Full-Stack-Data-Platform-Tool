@@ -15,7 +15,7 @@ const page = () => {
 	const [render, setRender] = useState(false);
 	useEffect(() => {
 		if (ref.current && !render && refCanvas.current) {
-			pizzaRef.current.primaryColumn("nct_id")
+			pizzaRef.current.primaryColumn("internalId");
 			pizzaRef.current.ratio(window.devicePixelRatio);
 			pizzaRef.current.margin({ top: 120, right: 220, bottom: 0, left: 220 });
 			pizzaRef.current.canvasWidth(refCanvas.current.width);

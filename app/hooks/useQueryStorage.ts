@@ -17,7 +17,13 @@ export const useQueryStore = create<QueryStore>()(
 			isLoading: false,
 			data: [],
 			query: "",
-			setData: (data: any[]) => set({ data }),
+			setData: (data: any[]) => {
+				for (let i = 0; i < data.length; i++) {
+					// add internalId to each data item
+					data[i]["internalId"] = crypto.randomUUID();
+				};
+				set({ data })
+			},
 			onLoading: () => set({ isLoading: true }),
 			onFinish: () => set({ isLoading: false }),
 			setQuery: (query: string) => set({ query }),

@@ -10,6 +10,7 @@ import earcut from "earcut";
 import * as Comlink from "comlink";
 // import * as twgl from "twgl.js";
 class ShapeWorker {
+	shapesById: { [id: string]: { x: number; y: number; d: string; fill: string; id: string } } = {};
 	customElement: HTMLElement;
 	shapeRenderer: InstanceType<typeof ShapeRenderer>;
 	lloyd: InstanceType<typeof Lloyd> | null = null;
@@ -118,9 +119,7 @@ class ShapeWorker {
 
 	updateShapeData(shapeIds: string[]) {
 		this.shapeIds = shapeIds;
-		// console.log("shapeIds ", this.shapeIds);
 		this.seedSections();
-		// console.log("seeds ", this.seeds);
 		this.lloyd?.renderInChunks(this.seeds, this.seedBoundryIds);
 	}
 
@@ -128,7 +127,6 @@ class ShapeWorker {
 		const seeds: number[] = [];
 		const seedBoundryIds: number[] = [];
 		for (const section of this.sections) {
-			console.log("seeding section ", section.id, this.sectionIntegerIds[section.id])
 			const id = this.sectionIntegerIds[section.id];
 			const { startAngle, endAngle, innerRadius, outerRadius, count } = section;
 			const arcCount = count || 0;
@@ -140,12 +138,9 @@ class ShapeWorker {
 				seeds.push((x / this.containerWidth) * 2, -(y / this.containerHeight) * 2); // <-- is the 2 here on account of the pxd?
 				seedBoundryIds.push(id);
 			}
-			console.log("after seeding boundry ids look like this ", seedBoundryIds);
 		}
 		this.seedBoundryIds = seedBoundryIds;
 		this.seeds = seeds;
-		console.log("section ids ", this.sectionIntegerIds)
-		console.log("seedBoundryIds ", new Set(this.seedBoundryIds));
 	};
 
 	transferGLCanvas = (canvas: OffscreenCanvas) => {
@@ -167,46 +162,40 @@ class ShapeWorker {
 		if (keepOpen && !this.stream) {
 			this.positions = [];
 			this.shapeData = [];
-			// console.log("streaming ");
 		}
-		
+
 		if (keepOpen) this.stream = true;
 		if (this.stream) {
 			this.positions = [...this.positions, ...payload];
-			// console.log("positions ", this.positions);
 			let id = 0;
 			for (let i = 0; i < this.positions.length; i += 2) {
-				const x = this.positions[i]
-				const y = this.positions[i + 1]
-				this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
+				const x = this.positions[i];
+				const y = this.positions[i + 1];
+				this.shapesById[this.shapeIds[id]] = { x, y, d: "", fill: "green", id: this.shapeIds[id] };
+				// this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
 				id++;
 			}
-			// console.log("shapeData ", this.shapeData);
-			this.shapeRenderer.updateShapes(this.shapeData);
-			// this.draw();
+			this.shapeRenderer.updateShapes(Object.values(this.shapesById));
 		}
 		// close the stream
 		if (!keepOpen) {
 			this.stream = false;
 			this.positions = [...this.positions, ...payload];
-			// console.log("positions ", this.positions);
 			let id = 0;
 			for (let i = 0; i < this.positions.length; i += 2) {
-				const x = this.positions[i]
-				const y = this.positions[i + 1]
-				this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
+				const x = this.positions[i];
+				const y = this.positions[i + 1];
+				this.shapesById[this.shapeIds[id]] = { x, y, d: "", fill: "green", id: this.shapeIds[id] };
+				// this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
 				id++;
 			}
-			// console.log("shapeData ", this.shapeData);	
-			this.shapeRenderer.updateShapes(this.shapeData);
-			// this.draw();
+			// this.shapeRenderer.updateShapes(this.shapeData);
+			this.shapeRenderer.updateShapes(Object.values(this.shapesById));
 		}
 	};
 
 	draw = () => {
 		if (!this.ctx || !this.shapeCanvas || !this.pxd || !this.containerWidth || !this.containerHeight) return;
-
-		// console.log("drawing ", this.positions);
 		const { ctx, shapeCanvas, pxd, customElement, containerWidth, containerHeight } = this;
 		ctx.globalAlpha = 1;
 		ctx.save();
@@ -219,8 +208,8 @@ class ShapeWorker {
 				const x = +path.attr("x");
 				const y = +path.attr("y");
 				const fill = path.attr("fill");
-				// const opacity = path.attr("opacity");
-				// ctx.globalAlpha = +opacity;
+				const opacity = path.attr("opacity");
+				ctx.globalAlpha = +opacity;
 				ctx.setTransform(pxd, 0, 0, pxd, (x * containerWidth) / 2 + shapeCanvas.width / 2, -(y * containerHeight) / 2 + shapeCanvas.height / 2);
 				ctx.fillStyle = fill;
 				ctx.beginPath();
