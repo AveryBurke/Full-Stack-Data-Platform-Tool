@@ -69,10 +69,10 @@ function createPizza() {
 				// flags
 				resetRings = false,
 				resetSlices = false;
-		
+
 			// sort data according to the slice and ring sets
 			data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
-	
+
 			// workers
 			const SWorker: Comlink.Remote<typeof ShapeWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/shapeWorker.ts", import.meta.url), { type: "module" })
@@ -103,20 +103,30 @@ function createPizza() {
 					).length;
 				}
 				await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-				shapeWorker.updateShapeData(data.map(d => d[primaryColumn]));
+				shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
 			};
 
 			frameWorker.getFrames(Comlink.proxy(cb));
 
 			// update handlers
 			updateData = function () {
-				const cb = (input: Section[][]) => {
+				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				const cb = async (input: Section[][]) => {
 					backgroundWorker.changeEase("easeLinear");
 					backgroundWorker.changeTransitionDuration(300 / input.length);
 					backgroundWorker.addTransitions(input);
 					backgroundWorker.dequeue();
 					backgroundWorker.changeEase("easeIdentitiy");
 					backgroundWorker.changeTransitionDuration(300);
+
+					for (const section of input[input.length - 1]) {
+						section.count = data.filter(
+							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+						).length;
+					}
+					console.log(input[input.length - 1]);
+					await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+					shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
 				};
 				// When the data changes the slices and rings need to be updated.
 				// Many of the calculations are redundant with those in the updateSliceSet and updateRingSet functions.
@@ -190,11 +200,21 @@ function createPizza() {
 			};
 
 			updateRingSet = function () {
-				const cb = (changDuration: boolean) => (input: Section[][]) => {
-					if (changDuration) backgroundWorker.changeTransitionDuration(Math.round(200 / input.length));
+				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				const cb = (update: boolean) => async (input: Section[][]) => {
+					if (update) backgroundWorker.changeTransitionDuration(Math.round(200 / input.length));
 					backgroundWorker.addTransitions(input);
 					backgroundWorker.dequeue();
 					backgroundWorker.changeTransitionDuration(300);
+					if (update) {
+						for (const section of input[input.length - 1]) {
+							section.count = data.filter(
+								(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+							).length;
+						}
+						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+						shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+					}
 				};
 				if (resetRings) {
 					colorPallet = pallet(Math.max(ringSet.length, 8));
@@ -266,24 +286,28 @@ function createPizza() {
 
 			updateSliceSet = function () {
 				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
-				const cb = async (input: Section[][]) => {
+				const cb = (update: boolean) => async (input: Section[][]) => {
 					// d3 ease functions causes jank when there are a lot of slices.
-					backgroundWorker.changeEase(sliceSet.length < 50 ? "easeQuadIn" : "easeIdentitiy");
+					backgroundWorker.changeEase(sliceSet.length < 50 ? (update ? "easeQuadIn" : "easeQuad") : "easeIdentitiy");
 					backgroundWorker.changeTransitionDuration(200);
 					backgroundWorker.addTransitions(input);
 					backgroundWorker.dequeue();
 					backgroundWorker.changeEase("easeIdentitiy");
 					backgroundWorker.changeTransitionDuration(300);
-					for (const section of input[input.length - 1]) {
-						section.count = data.filter(
-							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
-						).length;
+					if (update) {
+						for (const section of input[input.length - 1]) {
+							section.count = data.filter(
+								(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+							).length;
+						}
+						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
+						shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
 					}
-					await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-					shapeWorker.updateShapeData(data.map(d => d[primaryColumn]));
 				};
 				if (resetSlices) {
-					data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+					data.sort(
+						(a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b))
+					);
 					// d3 ease functions cause jank when there are a lot of slices.
 					sliceSet.forEach((slice) => {
 						sliceAngles[slice] = { startAngle: 0, endAngle: 0 };
@@ -291,7 +315,6 @@ function createPizza() {
 					sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]]));
 					frameWorker.updateSliceColors(sliceColors);
 					frameWorker.updateSliceAngles(sliceAngles);
-					resetSlices = false;
 				}
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length]));
 				pieGenerator = pie<string>()
@@ -304,7 +327,8 @@ function createPizza() {
 					})
 				);
 				frameWorker.updateSliceAngles(sliceAngles);
-				frameWorker.getFrames(Comlink.proxy(cb));
+				frameWorker.getFrames(Comlink.proxy(cb(resetSlices)));
+				resetSlices = false;
 			};
 		});
 	}

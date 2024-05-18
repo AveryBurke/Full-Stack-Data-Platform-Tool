@@ -442,6 +442,7 @@ export class Lloyd {
 				this.keepOpen = true;
 				await this.render();
 				this.keepOpen = false;
+				console.log("rendered chunk ", currentVectors.length / 2, " vectors");
 				currentVectors = [];
 				currentArcIndexes = [];
 			}
@@ -450,6 +451,7 @@ export class Lloyd {
 			currentArcIndexes.push(offsetArcIds[Math.floor((i + 1) / 2)]);
 		}
 		if (currentArcIndexes.length > 0) {
+			console.log("rendered chunk ", currentVectors.length / 2, " vectors");
 			this.updateOffsets(currentVectors, currentArcIndexes);
 			this.render();
 		}

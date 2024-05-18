@@ -4,7 +4,7 @@ import { timer } from "d3-timer";
 import { d3EasingFunctions } from "./easings";
 export class ShapeRenderer {
 	shapes: { x: number; y: number; d: string; fill: string; id: string }[] = [];
-	duration: number = 250;
+	duration: number = 200;
 	exitDuration: number = 0;
 	customElement: HTMLElement;
 	generator: (d: any) => string | null;
@@ -12,16 +12,30 @@ export class ShapeRenderer {
 	ease: (normalizedTime: number) => number = (number) => number;
 	customClass = "shape";
 
-	constructor(curstomElement: HTMLElement, generator: (d: any) => string | null, draw: (() => void) | null, customClass?: string) {
+	constructor(curstomElement: HTMLElement, generator: (d: any) => string | null, draw: (() => void) | null, customClass?: string, ease?: Easing) {
 		this.customElement = curstomElement;
 		this.generator = generator;
 		this.draw = draw;
 		if (customClass) this.customClass = customClass;
+		if (ease) this.ease = d3EasingFunctions[ease];
 	}
 
 	updateShapes(shapes: { x: number; y: number; d: string; fill: string; id: string }[]) {
+		// console.log("shapes updated in shapeRenderer", shapes.length);
 		this.shapes = shapes;
 		this.render();
+	}
+
+	extraTransition() {
+		const { customElement, customClass } = this;
+		const dataBinding = select(customElement)
+			.selectAll<HTMLElement, { x: number; y: number; fill: string; d: string; id: string }>(`custom.${customClass}`)
+			// .data(this.shapes)
+			.data(this.shapes, function (d) {
+				return d.id || select(this).attr("id");
+			});
+
+		this.transition(dataBinding);
 	}
 
 	render() {
@@ -49,19 +63,13 @@ export class ShapeRenderer {
 
 		this.transition(dataBinding);
 
-		setTimeout(() => {
-			dataBinding
-				.exit()
-				.selectAll("path")
-				.transition()
-				.duration(this.duration)
-                .attr("opacity", 0)
-				// .each(function () {
-				// 	const id = select(this).attr("id");
-				// 	delete current[id];
-				// })
-				.remove();
-		}, this.exitDuration);
+		dataBinding
+			.exit()
+            .transition("exit")
+            .duration(this.duration)
+            .attr("opacity", 0)
+			.remove();
+
 	}
 
 	private transition(selection: Selection<HTMLElement, { x: number; y: number; d: string; fill: string; id: string }, BaseType, unknown>) {

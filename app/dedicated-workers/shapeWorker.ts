@@ -10,13 +10,12 @@ import earcut from "earcut";
 import * as Comlink from "comlink";
 // import * as twgl from "twgl.js";
 class ShapeWorker {
+	currentShape = 0;
 	shapesById: { [id: string]: { x: number; y: number; d: string; fill: string; id: string } } = {};
 	customElement: HTMLElement;
 	shapeRenderer: InstanceType<typeof ShapeRenderer>;
 	lloyd: InstanceType<typeof Lloyd> | null = null;
 	seeds: number[] = [];
-	stream = false;
-	positions: number[] = [];
 	shapeIds: string[] = []; // these should be sorted according to slice and ring
 	shapeData: { x: number; y: number; d: string; fill: string; id: string }[] = [];
 	seedBoundryIds: number[] = [];
@@ -47,7 +46,7 @@ class ShapeWorker {
 		// create a fake document with a custom element and initilize the shapeRenderer
 		const { document } = new (JSDOM as any)("<!DOCTYPE html><html><head></head><body></body></html>");
 		this.customElement = document.body.appendChild(document.createElement("custom"));
-		this.shapeRenderer = new ShapeRenderer(this.customElement, (d: any) => d.d, this.draw);
+		this.shapeRenderer = new ShapeRenderer(this.customElement, (d: any) => d.d, this.draw, "shape", "easeLinear");
 	}
 
 	// this is a slow meothd. Think about streaming these results to voronoi generator.
@@ -108,16 +107,22 @@ class ShapeWorker {
 			}
 			this.boundries[section.id] = triangles;
 		}
-		// this.renderStencil();
-		// this.seedSections();
+
 		if (this.lloyd) {
 			this.lloyd.updateStencil(Object.values(this.boundries).flat());
 			this.lloyd.renderStencil();
-			// this.lloyd.render();
 		}
 	};
 
 	updateShapeData(shapeIds: string[]) {
+		// console.log("updating shape data ", shapeIds.length, this.shapeIds.length);
+		if (shapeIds.length < this.shapeIds.length) {
+			const toRemove = this.shapeIds.filter((id) => !shapeIds.includes(id));
+			for (const id of toRemove) {
+				// console.log("removing", id);
+				delete this.shapesById[id];
+			}
+		}
 		this.shapeIds = shapeIds;
 		this.seedSections();
 		this.lloyd?.renderInChunks(this.seeds, this.seedBoundryIds);
@@ -130,6 +135,7 @@ class ShapeWorker {
 			const id = this.sectionIntegerIds[section.id];
 			const { startAngle, endAngle, innerRadius, outerRadius, count } = section;
 			const arcCount = count || 0;
+			// console.log("section ", section.id, " arcCount ", arcCount);
 			for (let i = 0; i < arcCount; ++i) {
 				const randomClampedR = Math.random() * (outerRadius - innerRadius) + innerRadius,
 					randomClampedTheta = Math.random() * (endAngle - startAngle) + startAngle - Math.PI / 2,
@@ -158,40 +164,33 @@ class ShapeWorker {
 	};
 
 	handlePositions = ({ keepOpen, payload }: { keepOpen: boolean; payload: Float32Array }) => {
-		// // // start a new stream and clear the positions array
-		if (keepOpen && !this.stream) {
-			this.positions = [];
+		
+		if (keepOpen) {
+			for (let i = 0; i < payload.length; i += 2) {
+				const x = payload[i];
+				const y = payload[i + 1];
+				this.shapesById[this.shapeIds[this.currentShape]] = { x, y, d: "", fill: "green", id: this.shapeIds[this.currentShape] };
+				this.currentShape++;
+			}
+			this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
+		}
+		// close the stream and reset the stream state
+		if (!keepOpen) {
+			for (let i = 0; i < payload.length; i += 2) {
+				const x = payload[i];
+				const y = payload[i + 1];
+				// console.log("adding shape", { x, y, d: "", fill: "green", id: this.shapeIds[this.currentShape] });
+				this.shapesById[this.shapeIds[this.currentShape]] = { x, y, d: "", fill: "green", id: this.shapeIds[this.currentShape] };
+				this.currentShape++;
+			}
+			this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
+			this.currentShape = 0;
 			this.shapeData = [];
+			// the last chunk of data hasn't made it out of the shape renderer's enter selection
+			this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
 		}
 
-		if (keepOpen) this.stream = true;
-		if (this.stream) {
-			this.positions = [...this.positions, ...payload];
-			let id = 0;
-			for (let i = 0; i < this.positions.length; i += 2) {
-				const x = this.positions[i];
-				const y = this.positions[i + 1];
-				this.shapesById[this.shapeIds[id]] = { x, y, d: "", fill: "green", id: this.shapeIds[id] };
-				// this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
-				id++;
-			}
-			this.shapeRenderer.updateShapes(Object.values(this.shapesById));
-		}
-		// close the stream
-		if (!keepOpen) {
-			this.stream = false;
-			this.positions = [...this.positions, ...payload];
-			let id = 0;
-			for (let i = 0; i < this.positions.length; i += 2) {
-				const x = this.positions[i];
-				const y = this.positions[i + 1];
-				this.shapesById[this.shapeIds[id]] = { x, y, d: "", fill: "green", id: this.shapeIds[id] };
-				// this.shapeData.push({ x, y, d: "", fill: "green", id: this.shapeIds[id] });
-				id++;
-			}
-			// this.shapeRenderer.updateShapes(this.shapeData);
-			this.shapeRenderer.updateShapes(Object.values(this.shapesById));
-		}
+		
 	};
 
 	draw = () => {
@@ -204,6 +203,8 @@ class ShapeWorker {
 		select(customElement)
 			.selectAll("custom.shape")
 			.each(function (d: any, i) {
+				console.log("drawing shape", d);
+				console.log("selecting from custom element", select(this).node());
 				const path = select(this).select("path");
 				const x = +path.attr("x");
 				const y = +path.attr("y");
