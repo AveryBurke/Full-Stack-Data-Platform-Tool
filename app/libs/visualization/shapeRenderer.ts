@@ -30,7 +30,6 @@ export class ShapeRenderer {
 		const { customElement, customClass } = this;
 		const dataBinding = select(customElement)
 			.selectAll<HTMLElement, { x: number; y: number; fill: string; d: string; id: string }>(`custom.${customClass}`)
-			// .data(this.shapes)
 			.data(this.shapes, function (d) {
 				return d.id || select(this).attr("id");
 			});
@@ -43,11 +42,15 @@ export class ShapeRenderer {
 
 		const dataBinding = select(customElement)
 			.selectAll<HTMLElement, { x: number; y: number; fill: string; d: string; id: string }>(`custom.${customClass}`)
-			// .data(this.shapes)
 			.data(this.shapes, function (d) {
 				return d.id || select(this).attr("id");
 			});
-		// don't exit until the transition is complete
+
+		dataBinding
+			.exit()
+			// .transition("exit")
+			// .attr("opacity", 0)
+			.remove();
 
 		dataBinding
 			.enter()
@@ -60,16 +63,10 @@ export class ShapeRenderer {
 			.attr("fill", (d) => d.fill)
 			.attr("d", (d) => this.generator(d) || "")
 			.attr("opacity", 0);
-
-		this.transition(dataBinding);
-
-		dataBinding
-			.exit()
-            .transition("exit")
-            .duration(this.duration)
-            .attr("opacity", 0)
-			.remove();
-
+		setTimeout(() => {
+			this.transition(dataBinding);
+		}, 100);
+		
 	}
 
 	private transition(selection: Selection<HTMLElement, { x: number; y: number; d: string; fill: string; id: string }, BaseType, unknown>) {

@@ -50,7 +50,7 @@ class FrameWorker {
 				return ringSet.map((ring, j) => {
 					const { innerRadius, outerRadius } = this.ringHeights[ring]!;
 					return {
-						id: `${ring}-${slice}`,
+						id: `${slice}-${ring}`,
 						startAngle,
 						endAngle,
 						innerRadius,

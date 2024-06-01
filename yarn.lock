@@ -1546,6 +1546,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/d3-array@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "@types/d3-array@npm:3.2.1"
+  checksum: 10c0/38bf2c778451f4b79ec81a2288cb4312fe3d6449ecdf562970cc339b60f280f31c93a024c7ff512607795e79d3beb0cbda123bb07010167bce32927f71364bca
+  languageName: node
+  linkType: hard
+
 "@types/d3-color@npm:*":
   version: 3.1.3
   resolution: "@types/d3-color@npm:3.1.3"
@@ -1979,6 +1986,7 @@ __metadata:
     "@testing-library/react": "npm:^15.0.5"
     "@testing-library/react-hooks": "npm:^8.0.1"
     "@types/chroma-js": "npm:^2.4.4"
+    "@types/d3-array": "npm:^3.2.1"
     "@types/d3-ease": "npm:^3.0.2"
     "@types/d3-interpolate": "npm:^3.0.4"
     "@types/d3-shape": "npm:^3.1.6"
@@ -2001,6 +2009,8 @@ __metadata:
     classnames: "npm:^2.5.1"
     comlink: "npm:^4.4.1"
     csv-parser: "npm:^3.0.0"
+    d3-array: "npm:^3.2.4"
+    d3-arrays: "npm:^0.4.1"
     d3-ease: "npm:^3.0.1"
     d3-interpolate: "npm:^3.0.1"
     d3-selection: "npm:^3.0.0"
@@ -3052,6 +3062,22 @@ __metadata:
   bin:
     csv-parser: bin/csv-parser
   checksum: 10c0/206aef102c10d532a31c7d85e6b1b0e53c7cb8346037eb9f23e0bd7369788960d8f2431639ea9f62e34ddf54d0182dfb345691c11c666802324f25c51dba79bc
+  languageName: node
+  linkType: hard
+
+"d3-array@npm:^3.2.4":
+  version: 3.2.4
+  resolution: "d3-array@npm:3.2.4"
+  dependencies:
+    internmap: "npm:1 - 2"
+  checksum: 10c0/08b95e91130f98c1375db0e0af718f4371ccacef7d5d257727fe74f79a24383e79aba280b9ffae655483ffbbad4fd1dec4ade0119d88c4749f388641c8bf8c50
+  languageName: node
+  linkType: hard
+
+"d3-arrays@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "d3-arrays@npm:0.4.1"
+  checksum: 10c0/df4735ce4db43762090f1bc4014e5bfc82d91bc49bc6ced7e5eb8ccc2c32fa4a7fff77ddbc5711ec8f0998c6d5d375361d33b1dcde3c463c9566d7c1a2108b27
   languageName: node
   linkType: hard
 
@@ -4783,6 +4809,13 @@ __metadata:
     hasown: "npm:^2.0.0"
     side-channel: "npm:^1.0.4"
   checksum: 10c0/f8b294a4e6ea3855fc59551bbf35f2b832cf01fd5e6e2a97f5c201a071cc09b49048f856e484b67a6c721da5e55736c5b6ddafaf19e2dbeb4a3ff1821680de6c
+  languageName: node
+  linkType: hard
+
+"internmap@npm:1 - 2":
+  version: 2.0.3
+  resolution: "internmap@npm:2.0.3"
+  checksum: 10c0/8cedd57f07bbc22501516fbfc70447f0c6812871d471096fad9ea603516eacc2137b633633daf432c029712df0baefd793686388ddf5737e3ea15074b877f7ed
   languageName: node
   linkType: hard
 

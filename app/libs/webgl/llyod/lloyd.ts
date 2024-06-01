@@ -293,7 +293,6 @@ export class Lloyd {
 			// for (let i = 0; i < (this.vornoiBufferArrays.a_position.data.length / this.vornoiBufferArrays.a_position.numComponents) + 1; i++){
 			// 	debugColors.push(Math.random(), Math.random(), Math.random())
 			// }
-			// // console.log("debug colors", debugColors)
 			// this.debug("u_vornoi", this.vornoiFrameBufferInfo.attachments[0], debugColors)
 		}
 	}
@@ -442,7 +441,6 @@ export class Lloyd {
 				this.keepOpen = true;
 				await this.render();
 				this.keepOpen = false;
-				console.log("rendered chunk ", currentVectors.length / 2, " vectors");
 				currentVectors = [];
 				currentArcIndexes = [];
 			}
@@ -451,7 +449,6 @@ export class Lloyd {
 			currentArcIndexes.push(offsetArcIds[Math.floor((i + 1) / 2)]);
 		}
 		if (currentArcIndexes.length > 0) {
-			console.log("rendered chunk ", currentVectors.length / 2, " vectors");
 			this.updateOffsets(currentVectors, currentArcIndexes);
 			this.render();
 		}

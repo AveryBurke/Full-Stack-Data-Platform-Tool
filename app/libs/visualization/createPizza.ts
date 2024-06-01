@@ -1,7 +1,7 @@
 "use client";
 import { Selection, select } from "d3-selection";
 import { pie, arc } from "d3-shape";
-
+import { group, rollup } from "d3-array";
 import { pallet } from "../colorPallet";
 import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
@@ -34,7 +34,8 @@ function createPizza() {
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
-				pieRadius = pieDiameter / 2;
+				pieRadius = pieDiameter / 2,
+				cmp = (a: number, b: number): number => +(a > b) - +(a < b);
 			// accessors
 			let ringValue = (d: any): string => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
@@ -63,6 +64,9 @@ function createPizza() {
 						return [p.data, { startAngle, endAngle }];
 					})
 				),
+				// previous data
+				previousRingSet = ringSet,
+				previousSliceSet = sliceSet,
 				// slice color pallet
 				colorPallet = pallet(Math.max(ringSet.length, 8)),
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
@@ -71,7 +75,16 @@ function createPizza() {
 				resetSlices = false;
 
 			// sort data according to the slice and ring sets
-			data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+			data.sort(
+				(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+			);
+
+			const grouped = rollup(
+				data,
+				(D) => D.map<string>((d) => d[primaryColumn]),
+				(d) => sliceValue(d),
+				(d) => ringValue(d)
+			);
 
 			// workers
 			const SWorker: Comlink.Remote<typeof ShapeWorker> = Comlink.wrap(
@@ -102,15 +115,22 @@ function createPizza() {
 						(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
 					).length;
 				}
-				await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-				shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+				await shapeWorker.addSections(
+					input[input.length - 1].sort((a, b) =>
+						cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring)))
+					),
+					Comlink.proxy(arc<Section>())
+				);
+				shapeWorker.partialUpdateShapeData(grouped);
 			};
 
 			frameWorker.getFrames(Comlink.proxy(cb));
 
 			// update handlers
 			updateData = function () {
-				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				data.sort(
+					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				);
 				const cb = async (input: Section[][]) => {
 					backgroundWorker.changeEase("easeLinear");
 					backgroundWorker.changeTransitionDuration(300 / input.length);
@@ -124,9 +144,23 @@ function createPizza() {
 							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
 						).length;
 					}
-					console.log(input[input.length - 1]);
-					await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-					shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+
+					await shapeWorker.addSections(
+						input[input.length - 1].sort(
+							(a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice)) || cmp(ringSet.indexOf(a.ring), ringSet.indexOf(b.ring))
+						),
+						Comlink.proxy(arc<Section>())
+					);
+
+					const grouped = rollup(
+						data,
+						(D) => D.map<string>((d) => d[primaryColumn]),
+						(d) => sliceValue(d),
+						(d) => ringValue(d)
+					);
+
+					shapeWorker.updateShapeData(grouped);
+					// shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
 				};
 				// When the data changes the slices and rings need to be updated.
 				// Many of the calculations are redundant with those in the updateSliceSet and updateRingSet functions.
@@ -158,6 +192,9 @@ function createPizza() {
 			};
 
 			updateRingColumn = function () {
+				data.sort(
+					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				);
 				// Unlike the slices the rings need to be transitioned one at a time.
 				// So Every ring should get its own animated transition.
 				// However, this can be very slow for large ring sets.
@@ -197,24 +234,36 @@ function createPizza() {
 				ringCount = {};
 				ringHeights = {};
 				resetRings = true;
+				previousRingSet = [];
 			};
 
 			updateRingSet = function () {
-				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				const movedRings = ringSet.filter((ring, i) => ring !== previousRingSet[i]);
+				data.sort(
+					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				);
+
 				const cb = (update: boolean) => async (input: Section[][]) => {
 					if (update) backgroundWorker.changeTransitionDuration(Math.round(200 / input.length));
 					backgroundWorker.addTransitions(input);
 					backgroundWorker.dequeue();
 					backgroundWorker.changeTransitionDuration(300);
-					if (update) {
-						for (const section of input[input.length - 1]) {
-							section.count = data.filter(
-								(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
-							).length;
-						}
-						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-						shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+					for (const section of input[input.length - 1]) {
+						section.count = data.filter(
+							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
+						).length;
 					}
+					const movedArcs = input[input.length - 1]
+						.filter((section) => movedRings.includes(section.ring))
+						.sort((a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring))));
+					const grouped = rollup(
+						data.filter((d) => movedRings.includes(ringValue(d))),
+						(D) => D.map<string>((d) => d[primaryColumn]),
+						(d) => sliceValue(d),
+						(d) => ringValue(d)
+					);
+					await shapeWorker.addSections(movedArcs, Comlink.proxy(arc<Section>()));
+					shapeWorker.partialUpdateShapeData(grouped);
 				};
 				if (resetRings) {
 					colorPallet = pallet(Math.max(ringSet.length, 8));
@@ -262,6 +311,7 @@ function createPizza() {
 				}
 				frameWorker.getFrames(Comlink.proxy(cb(resetRings)));
 				resetRings = false;
+				previousRingSet = ringSet;
 			};
 
 			updateSliceColumn = function () {
@@ -272,7 +322,9 @@ function createPizza() {
 					backgroundWorker.addTransitions(input);
 				};
 				sliceValue = (d: any) => d[sliceColumn];
-				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				data.sort(
+					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				);
 				sliceCount = {};
 				sliceSet.forEach((slice) => {
 					sliceAngles[slice] = { startAngle: (Math.PI * 360) / 180, endAngle: (Math.PI * 360) / 180 };
@@ -285,7 +337,9 @@ function createPizza() {
 			};
 
 			updateSliceSet = function () {
-				data.sort((a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b)));
+				data.sort(
+					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				);
 				const cb = (update: boolean) => async (input: Section[][]) => {
 					// d3 ease functions causes jank when there are a lot of slices.
 					backgroundWorker.changeEase(sliceSet.length < 50 ? (update ? "easeQuadIn" : "easeQuad") : "easeIdentitiy");
@@ -301,12 +355,20 @@ function createPizza() {
 							).length;
 						}
 						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
-						shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+						const grouped = rollup(
+							data,
+							(D) => D.map<string>((d) => d[primaryColumn]),
+							(d) => sliceValue(d),
+							(d) => ringValue(d)
+						);
+						shapeWorker.updateShapeData(grouped);
+					} else {
+						//TODO: implement a function that rotates only the shapes in the moved slices and does not call updateShapeData
 					}
 				};
 				if (resetSlices) {
 					data.sort(
-						(a, b) => sliceSet.indexOf(sliceValue(a)) - sliceSet.indexOf(sliceValue(b)) || ringSet.indexOf(ringValue(a)) - ringSet.indexOf(ringValue(b))
+						(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
 					);
 					// d3 ease functions cause jank when there are a lot of slices.
 					sliceSet.forEach((slice) => {
