@@ -2,7 +2,7 @@ import svgPathCommander from "svg-path-commander";
 import partitionNumber from "../static/particianNumber";
 import { ShapeRenderer } from "../libs/visualization/shapeRenderer";
 import { Lloyd } from "@/app/libs/webgl/llyod/lloyd";
-import { select } from "d3-selection";
+import { local, select } from "d3-selection";
 import { InternMap } from "d3-array";
 //@ts-ignore
 import { parseHTML } from "linkedom/worker";
@@ -13,7 +13,9 @@ import * as Comlink from "comlink";
 class ShapeWorker {
 	previousStreamChunk: number = 0;
 	currentShape = 0;
+	currentCount = 0;
 	currentRange = 0;
+	currentSection = 0;
 	ranges: number[] = [];
 	shapesById: { [id: string]: { x: number; y: number; d: string; fill: string; id: string } } = {};
 	sectionByRange: { [rangeStart: string]: { slice: string; ring: string; current: number } } = {};
@@ -26,7 +28,7 @@ class ShapeWorker {
 	sections: Section[] = [];
 	sectionIntegerIds: { [sectionID: string]: number } = {};
 	boundries: { [sectionID: string]: number[] } = {};
-	numPoints: number = 100;
+	numPoints: number = 50;
 	shapeCanvas: OffscreenCanvas | null = null;
 	glCanvas: OffscreenCanvas | null = null;
 	gl: WebGL2RenderingContext | null = null;
@@ -65,14 +67,14 @@ class ShapeWorker {
 		// add subsection
 		for (let i = 0; i < this.sections.length; i++) {
 			const section = this.sections[i];
-			if (!section.count) continue;
-			// console.log("section ", section.id, " count ", section.count);
-
+			if (!section.count) {
+				toRemove.push(i);
+				continue;
+			}
 			this.ranges.push(this.ranges[this.ranges.length - 1] + section.count);
 			this.sectionByRange[this.ranges[this.ranges.length - 1]] = { slice: section.slice, ring: section.ring, current: 0 };
-			if (section.count > 300) {
+			if (section.count > 100) {
 				const partitions = partitionNumber(section.count, Math.ceil(section.count / 200));
-				// console.log("section ", section.id, " has subsections ", partitions?.length)
 				if (partitions) {
 					const { startAngle, endAngle, innerRadius, outerRadius, id } = section;
 					for (let j = 0; j < partitions.length; j++) {
@@ -195,12 +197,13 @@ class ShapeWorker {
 	// Assigns the positions returned from the lloyd relaxation to the shapes.
 	// Handles logic for streaming the positions to the shape renderer.
 	handlePositions = ({ keepOpen, payload }: { keepOpen: boolean; payload: Float32Array }) => {
+		console.log("seed boundry ids ", this.seedBoundryIds);
+		console.log("sections ", this.sections);
 		const cmp = (a: number, b: number): number => +(a > b) - +(a < b);
 		const debugColors = [
 			"red",
 			"green",
 			"blue",
-			"yellow",
 			"purple",
 			"orange",
 			"pink",
@@ -231,50 +234,67 @@ class ShapeWorker {
 		const arrayRange = (start: number, stop: number, step: number) => Array.from({ length: (stop - start) / step + 1 }, (value, index) => start + index * step);
 		let xs = arrayRange(0, payload.length - 1, 2);
 		let sortedXIndices: number[] = [];
-		// sort the positions within the original sections,
-		let step = 0;
-		let start = this.ranges[this.currentRange + step];
-		let stop = this.ranges[this.currentRange + step + 1];
-		let end = start + xs.length;
-		let startOfChunk = 0;
-		let endOfChunk = stop - start;
-		console.log("xs ", xs.length);
-		while (start < end) {
-			console.log("startOfChunk ", startOfChunk, " endOfChunk ", endOfChunk, "chunk length ", endOfChunk - startOfChunk);
+		let currentSectionId = this.seedBoundryIds[this.previousStreamChunk];
+		let start = 0;
+		let i = 0;
 
-			//sort just the x values of the points in the current section
-			const sortedChunk = xs.slice(startOfChunk, endOfChunk).sort((a, b) => cmp(payload[a], payload[b]));
-			console.log("sortedChunk ", sortedChunk);
-			sortedXIndices = sortedXIndices.concat(sortedChunk);
-			step++;
-			start = this.ranges[this.currentRange + step];
-			stop = this.ranges[this.currentRange + step + 1];
-			startOfChunk = endOfChunk;
-			endOfChunk = endOfChunk + stop - start;
+		// sort the x values by the section they belong to
+		for (i; i < xs.length; i++) {
+			if (currentSectionId !== this.seedBoundryIds[this.previousStreamChunk + i]) {
+				const sortedChunk = xs.slice(start, i).sort((a, b) => cmp(payload[a], payload[b]));
+				sortedXIndices = sortedXIndices.concat(sortedChunk);
+				currentSectionId = this.seedBoundryIds[this.previousStreamChunk + i];
+				start = i;
+			}
 		}
-		// console.log("ranges ", this.ranges)
-		this.currentRange = this.currentRange + step;
-		console.log("sorted ", sortedXIndices);
-		// console.log(" start ", start, " stop ", stop, " end ", end, " step ", step);
-		
-		this.previousStreamChunk = payload.length + this.previousStreamChunk;
+		// sort the last chunk
+		const sortedChunk = xs.slice(start).sort((a, b) => cmp(payload[a], payload[b]));
+		sortedXIndices = sortedXIndices.concat(sortedChunk);
+		this.previousStreamChunk += xs.length;
+
+		// Assign the new positions to the shapes
 		for (let i = 0; i < sortedXIndices.length; i++) {
-			const end = this.ranges.find((range) => this.currentShape < range);
-			console.log("end ", end);
-			if (!end) continue;
-			const { slice, ring } = this.sectionByRange[end];
+			const { slice, ring, count } = this.sections[this.currentSection];
 			const data = this.shapeIdsBySection.get(slice)?.get(ring);
-			if (!data) continue;
-			const id = data[this.sectionByRange[end].current];
+			if (!data || !count) {
+				this.currentShape = 0;
+				this.currentSection++;
+				continue;
+			}
+
+			if (!this.currentCount) this.currentCount = count;
+			const id = data[this.currentShape];
 			const x = payload[sortedXIndices[i]];
 			const y = payload[sortedXIndices[i] + 1];
-			this.shapesById[id] = { x, y, d: "", fill: debugColors[this.ranges.indexOf(end)], id };
-			this.sectionByRange[end].current++;
-			this.currentShape++;
+			this.shapesById[id] = { x, y, d: "", fill: debugColors[this.currentSection % debugColors.length], id };
+			if (this.currentShape === this.currentCount - 1) {
+				const previoiusSection = this.currentSection;
+				this.currentSection++;
+				if (!this.sections[this.currentSection]) break;
+				if (
+					this.sections[previoiusSection].ring === this.sections[this.currentSection].ring &&
+					this.sections[previoiusSection].slice === this.sections[this.currentSection].slice
+				) {
+					// we are in the same parent section, but we've hit the end of a subsection
+					// do not restart the shape index
+					// add the count of the subsection to the current count
+					this.currentCount += this.sections[this.currentSection].count || 0;
+					this.currentShape++;
+				} else {
+					// we are in a new parent section
+					// restart the shape index
+					// set the current count to the count of the new parent section
+					this.currentShape = 0;
+					this.currentCount = this.sections[this.currentSection].count || 0;
+				}
+			} else {
+				this.currentShape++;
+			}
 		}
-		// // Update the shapes in the shape renderer.
-		// // This will trigger a transition of the shapes to their new positions.
-		// // We are iterating over the keys of the shapesById object so that shapes that have not moved this iteration are not transitioned or removed.
+
+		// Update the shapes in the shape renderer.
+		// This will trigger a transition of the shapes to their new positions.
+		// We are iterating over the keys of the shapesById object so that shapes that have not moved this iteration are not transitioned or removed.
 		this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
 		if (!keepOpen) {
 			Object.keys(this.sectionByRange).forEach((range) => (this.sectionByRange[range].current = 0));
@@ -283,6 +303,8 @@ class ShapeWorker {
 			this.previousStreamChunk = 0;
 			this.currentShape = 0;
 			this.currentRange = 0;
+			this.currentSection = 0;
+			this.currentCount = 0;
 		}
 	};
 
@@ -303,7 +325,7 @@ class ShapeWorker {
 				const opacity = path.attr("opacity");
 				ctx.globalAlpha = +opacity;
 				ctx.setTransform(pxd, 0, 0, pxd, (x * containerWidth) / 2 + shapeCanvas.width / 2, -(y * containerHeight) / 2 + shapeCanvas.height / 2);
-				ctx.fillStyle =  fill;
+				ctx.fillStyle = fill;
 				ctx.beginPath();
 				ctx.arc(0, 0, 5, 0, 2 * Math.PI);
 				ctx.fill();

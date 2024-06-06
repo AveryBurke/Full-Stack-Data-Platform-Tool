@@ -1,7 +1,6 @@
 import * as twgl from "twgl.js";
 import createCone from "./createCone";
 import { createVornoiProgram, createIntermediateProgram, createTransformFeedbackProgram, createStencilProgram } from "./programs";
-import { arc } from "d3-shape";
 
 /**
  *

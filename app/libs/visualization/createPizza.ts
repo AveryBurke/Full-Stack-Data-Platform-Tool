@@ -8,6 +8,7 @@ import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
 import { FrameWorker } from "@/app/dedicated-workers/framWorker";
 import { ShapeWorker } from "@/app/dedicated-workers/shapeWorker";
 
+
 function createPizza() {
 	let data: any[],
 		primaryColumn: string,
@@ -82,10 +83,10 @@ function createPizza() {
 			const grouped = rollup(
 				data,
 				(D) => D.map<string>((d) => d[primaryColumn]),
-				(d) => sliceValue(d),
-				(d) => ringValue(d)
+				(d) => sliceValue(d) || "undefined",
+				(d) => ringValue(d) || "undefined"
 			);
-
+			console.log(grouped);
 			// workers
 			const SWorker: Comlink.Remote<typeof ShapeWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/shapeWorker.ts", import.meta.url), { type: "module" })
@@ -155,8 +156,8 @@ function createPizza() {
 					const grouped = rollup(
 						data,
 						(D) => D.map<string>((d) => d[primaryColumn]),
-						(d) => sliceValue(d),
-						(d) => ringValue(d)
+						(d) => sliceValue(d) || "undefined",
+						(d) => ringValue(d) || "undefined"
 					);
 
 					shapeWorker.updateShapeData(grouped);
@@ -239,6 +240,7 @@ function createPizza() {
 
 			updateRingSet = function () {
 				const movedRings = ringSet.filter((ring, i) => ring !== previousRingSet[i]);
+		
 				data.sort(
 					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
 				);
@@ -253,15 +255,17 @@ function createPizza() {
 							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
 						).length;
 					}
-					const movedArcs = input[input.length - 1]
+					let movedArcs = input[input.length - 1]
 						.filter((section) => movedRings.includes(section.ring))
 						.sort((a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring))));
 					const grouped = rollup(
-						data.filter((d) => movedRings.includes(ringValue(d))),
+						movedRings.length > 0 ? data.filter((d) => movedRings.includes(ringValue(d))) : data,
 						(D) => D.map<string>((d) => d[primaryColumn]),
-						(d) => sliceValue(d),
-						(d) => ringValue(d)
+						(d) => sliceValue(d) || "undefined",
+						(d) => ringValue(d) || "undefined"
 					);
+					// if movedArcs is empty, then default to the last frame.
+					movedArcs = movedArcs.length > 0 ? movedArcs : input[input.length - 1];
 					await shapeWorker.addSections(movedArcs, Comlink.proxy(arc<Section>()));
 					shapeWorker.partialUpdateShapeData(grouped);
 				};
@@ -358,8 +362,8 @@ function createPizza() {
 						const grouped = rollup(
 							data,
 							(D) => D.map<string>((d) => d[primaryColumn]),
-							(d) => sliceValue(d),
-							(d) => ringValue(d)
+							(d) => sliceValue(d) || "undefined",
+							(d) => ringValue(d) || "undefined"
 						);
 						shapeWorker.updateShapeData(grouped);
 					} else {
