@@ -1,8 +1,9 @@
 import svgPathCommander from "svg-path-commander";
 import partitionNumber from "../static/particianNumber";
 import { ShapeRenderer } from "../libs/visualization/shapeRenderer";
+import rotateCoordinates from "../libs/rotateCoordinates";
 import { Lloyd } from "@/app/libs/webgl/llyod/lloyd";
-import { local, select } from "d3-selection";
+import { select } from "d3-selection";
 import { InternMap } from "d3-array";
 //@ts-ignore
 import { parseHTML } from "linkedom/worker";
@@ -14,11 +15,8 @@ class ShapeWorker {
 	previousStreamChunk: number = 0;
 	currentShape = 0;
 	currentCount = 0;
-	currentRange = 0;
 	currentSection = 0;
-	ranges: number[] = [];
 	shapesById: { [id: string]: { x: number; y: number; d: string; fill: string; id: string } } = {};
-	sectionByRange: { [rangeStart: string]: { slice: string; ring: string; current: number } } = {};
 	customElement: HTMLElement;
 	shapeRenderer: InstanceType<typeof ShapeRenderer>;
 	lloyd: InstanceType<typeof Lloyd> | null = null;
@@ -58,7 +56,6 @@ class ShapeWorker {
 	// this is a slow meothd. Think about streaming these results to voronoi generator.
 	// look at some of the methods here https://stackoverflow.com/questions/37576685/using-async-await-with-a-foreach-loop
 	addSections = async (sections: Section[], generator: any) => {
-		this.ranges = [0];
 		this.sections = sections;
 		this.sectionIntegerIds = {};
 		this.boundries = {};
@@ -71,8 +68,7 @@ class ShapeWorker {
 				toRemove.push(i);
 				continue;
 			}
-			this.ranges.push(this.ranges[this.ranges.length - 1] + section.count);
-			this.sectionByRange[this.ranges[this.ranges.length - 1]] = { slice: section.slice, ring: section.ring, current: 0 };
+
 			if (section.count > 100) {
 				const partitions = partitionNumber(section.count, Math.ceil(section.count / 200));
 				if (partitions) {
@@ -160,6 +156,31 @@ class ShapeWorker {
 		this.lloyd?.renderInChunks(this.seeds, this.seedBoundryIds);
 	}
 
+	/**
+	 * Rotates each shape by the angle of rotation of its parent slice.
+	 * @param thetas an object whose keys are the slices and whose values are the angles of roatation per slice.
+	 */
+	rotateSections(thetas: { [slice: string]: number }) {
+		Object.keys(thetas).forEach((slice) => {
+			const theta = thetas[slice];
+			const sliceShapes = this.shapeIdsBySection.get(slice)?.values();
+			if (!sliceShapes) return;
+			if (!theta) return;
+			for (const shapes of sliceShapes) {
+				for (const shape of shapes) {
+					const [x, y] = rotateCoordinates(this.shapesById[shape].x, this.shapesById[shape].y, theta);
+						this.shapesById[shape].x = x;
+						this.shapesById[shape].y = y;
+				}
+			}
+		});
+		this.shapeRenderer.updateShapes(Object.values(this.shapesById));
+	}
+
+	/**
+	 * Seeds the sections with random points.
+	 * The number of points in each section is determined by the `count` property of the section.
+	 */
 	seedSections = () => {
 		const seeds: number[] = [];
 		const seedBoundryIds: number[] = [];
@@ -197,8 +218,6 @@ class ShapeWorker {
 	// Assigns the positions returned from the lloyd relaxation to the shapes.
 	// Handles logic for streaming the positions to the shape renderer.
 	handlePositions = ({ keepOpen, payload }: { keepOpen: boolean; payload: Float32Array }) => {
-		console.log("seed boundry ids ", this.seedBoundryIds);
-		console.log("sections ", this.sections);
 		const cmp = (a: number, b: number): number => +(a > b) - +(a < b);
 		const debugColors = [
 			"red",
@@ -236,10 +255,9 @@ class ShapeWorker {
 		let sortedXIndices: number[] = [];
 		let currentSectionId = this.seedBoundryIds[this.previousStreamChunk];
 		let start = 0;
-		let i = 0;
 
 		// sort the x values by the section they belong to
-		for (i; i < xs.length; i++) {
+		for (let i = 0; i < xs.length; i++) {
 			if (currentSectionId !== this.seedBoundryIds[this.previousStreamChunk + i]) {
 				const sortedChunk = xs.slice(start, i).sort((a, b) => cmp(payload[a], payload[b]));
 				sortedXIndices = sortedXIndices.concat(sortedChunk);
@@ -247,6 +265,7 @@ class ShapeWorker {
 				start = i;
 			}
 		}
+
 		// sort the last chunk
 		const sortedChunk = xs.slice(start).sort((a, b) => cmp(payload[a], payload[b]));
 		sortedXIndices = sortedXIndices.concat(sortedChunk);
@@ -266,7 +285,7 @@ class ShapeWorker {
 			const id = data[this.currentShape];
 			const x = payload[sortedXIndices[i]];
 			const y = payload[sortedXIndices[i] + 1];
-			this.shapesById[id] = { x, y, d: "", fill: debugColors[this.currentSection % debugColors.length], id };
+			this.shapesById[id] = { x, y, d: "", fill: "pink", id };
 			if (this.currentShape === this.currentCount - 1) {
 				const previoiusSection = this.currentSection;
 				this.currentSection++;
@@ -297,12 +316,11 @@ class ShapeWorker {
 		// We are iterating over the keys of the shapesById object so that shapes that have not moved this iteration are not transitioned or removed.
 		this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
 		if (!keepOpen) {
-			Object.keys(this.sectionByRange).forEach((range) => (this.sectionByRange[range].current = 0));
 			// the last chunk of data hasn't made it out of the shape renderer's enter selection
 			this.shapeRenderer.updateShapes(Object.keys(this.shapesById).map((key) => this.shapesById[key]));
+			// reset the current shape and section
 			this.previousStreamChunk = 0;
 			this.currentShape = 0;
-			this.currentRange = 0;
 			this.currentSection = 0;
 			this.currentCount = 0;
 		}
@@ -332,59 +350,6 @@ class ShapeWorker {
 			});
 		ctx.restore();
 	};
-
-	debug(key: string, tex: WebGLTexture, colors: number[]) {
-		if (this) {
-			const { gl, quad } = this;
-			if (!gl) return;
-			if (colors.length > 0) {
-				const vertexShaderSource = `#version 300 es
-                layout(location = 0) in vec2 a_position;
-                void main() {
-                  gl_Position = vec4(a_position, 0.0, 1.0);
-                }
-                `;
-				const fragmentShaderSource = `#version 300 es
-                precision mediump float;
-                uniform vec3 colors[${colors.length}];
-                uniform mediump isampler2D ${key};
-                out vec4 outColor;
-                void main() {
-                  ivec2 coord = ivec2(gl_FragCoord.xy);
-                  ivec4 t = texelFetch(${key}, coord, 0);
-                  outColor = vec4(colors[t.r], 1);
-                }
-                // `;
-
-				// const uniforms = {
-				// 	[key]: tex,
-				// };
-				// const debugProgramInfo = twgl.createProgramInfo(gl, [vertexShaderSource, fragmentShaderSource], {
-				// 	attribLocations: {
-				// 		a_position: 0,
-				// 	},
-				// });
-
-				// const debugBufferArrays: twgl.Arrays = {
-				// 	a_position: {
-				// 		numComponents: 2,
-				// 		data: quad,
-				// 		drawType: gl.STATIC_DRAW,
-				// 	},
-				// };
-				// const debugBufferInto = twgl.createBufferInfoFromArrays(gl, debugBufferArrays);
-
-				// gl.useProgram(debugProgramInfo.program);
-				// twgl.setBuffersAndAttributes(gl, debugProgramInfo, debugBufferInto);
-				// const arrayUniform = gl.getUniformLocation(debugProgramInfo.program, "colors");
-				// gl.uniform3fv(arrayUniform, new Float32Array(colors));
-				// gl.clearColor(-1, 0, 0, 0);
-				// gl.clear(gl.COLOR_BUFFER_BIT);
-				// twgl.setUniforms(debugProgramInfo, uniforms);
-				// gl.drawArrays(gl.TRIANGLES, 0, quad.length / 2);
-			}
-		}
-	}
 }
 
 Comlink.expose(ShapeWorker);

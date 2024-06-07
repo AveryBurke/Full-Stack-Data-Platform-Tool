@@ -82,7 +82,7 @@ function createPizza() {
 
 			const grouped = rollup(
 				data,
-				(D) => D.map<string>((d) => d[primaryColumn]),
+				(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
 				(d) => sliceValue(d) || "undefined",
 				(d) => ringValue(d) || "undefined"
 			);
@@ -155,7 +155,7 @@ function createPizza() {
 
 					const grouped = rollup(
 						data,
-						(D) => D.map<string>((d) => d[primaryColumn]),
+						(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
@@ -260,7 +260,7 @@ function createPizza() {
 						.sort((a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring))));
 					const grouped = rollup(
 						movedRings.length > 0 ? data.filter((d) => movedRings.includes(ringValue(d))) : data,
-						(D) => D.map<string>((d) => d[primaryColumn]),
+						(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
@@ -341,9 +341,10 @@ function createPizza() {
 			};
 
 			updateSliceSet = function () {
-				data.sort(
-					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
-				);
+				const oldSliceAngles = { ...sliceAngles };
+				// data.sort(
+				// 	(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
+				// );
 				const cb = (update: boolean) => async (input: Section[][]) => {
 					// d3 ease functions causes jank when there are a lot of slices.
 					backgroundWorker.changeEase(sliceSet.length < 50 ? (update ? "easeQuadIn" : "easeQuad") : "easeIdentitiy");
@@ -361,13 +362,15 @@ function createPizza() {
 						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 						const grouped = rollup(
 							data,
-							(D) => D.map<string>((d) => d[primaryColumn]),
+							(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
 							(d) => sliceValue(d) || "undefined",
 							(d) => ringValue(d) || "undefined"
 						);
 						shapeWorker.updateShapeData(grouped);
 					} else {
-						//TODO: implement a function that rotates only the shapes in the moved slices and does not call updateShapeData
+						const thetas = Object.fromEntries(sliceSet.map((slice) => [slice, sliceAngles[slice].endAngle - oldSliceAngles[slice].endAngle]));
+						console.log(thetas);
+						shapeWorker.rotateSections(thetas);
 					}
 				};
 				if (resetSlices) {
