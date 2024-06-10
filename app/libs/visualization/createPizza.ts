@@ -8,7 +8,6 @@ import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
 import { FrameWorker } from "@/app/dedicated-workers/framWorker";
 import { ShapeWorker } from "@/app/dedicated-workers/shapeWorker";
 
-
 function createPizza() {
 	let data: any[],
 		primaryColumn: string,
@@ -31,12 +30,14 @@ function createPizza() {
 			const backgroundCanvas = select(this).select("#background").node() as HTMLCanvasElement,
 				shapesCanvas = select(this).select("#shapes").node() as HTMLCanvasElement,
 				webglCanvas = select(this).select("#webgl").node() as HTMLCanvasElement,
+				hiddenCanvas = select(this).select("#hidden").node() as HTMLCanvasElement,
 				outsideHeight = margin.top + margin.bottom,
 				insideHeight = canvasHeight - outsideHeight,
 				diameterRatio = 0.85,
 				pieDiameter = diameterRatio * insideHeight,
 				pieRadius = pieDiameter / 2,
 				cmp = (a: number, b: number): number => +(a > b) - +(a < b);
+
 			// accessors
 			let ringValue = (d: any): string => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
@@ -82,7 +83,7 @@ function createPizza() {
 
 			const grouped = rollup(
 				data,
-				(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
+				(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
 				(d) => sliceValue(d) || "undefined",
 				(d) => ringValue(d) || "undefined"
 			);
@@ -93,9 +94,38 @@ function createPizza() {
 			);
 			const shapeWorker = await new SWorker();
 			const offfscreenShapesCanvas = shapesCanvas.transferControlToOffscreen();
-			const offScreenGLCanvas = webglCanvas.transferControlToOffscreen();
+			const offscreenGLCanvas = webglCanvas.transferControlToOffscreen();
+			const offscreenHiddenCanvas = hiddenCanvas.transferControlToOffscreen();
 			shapeWorker.transferShapeCanvas(Comlink.transfer(offfscreenShapesCanvas, [offfscreenShapesCanvas]));
-			shapeWorker.transferGLCanvas(Comlink.transfer(offScreenGLCanvas, [offScreenGLCanvas]));
+			shapeWorker.transferGLCanvas(Comlink.transfer(offscreenGLCanvas, [offscreenGLCanvas]));
+			shapeWorker.transferHiddenCanvas(Comlink.transfer(offscreenHiddenCanvas, [offscreenHiddenCanvas]));
+			shapesCanvas.addEventListener("mousemove", async(e) => {
+				const elementRelativeX = e.offsetX;
+				const elementRelativeY = e.offsetY;
+				const canvasRelativeX = (elementRelativeX * shapesCanvas.width) / shapesCanvas.clientWidth;
+				const canvasRelativeY = (elementRelativeY * shapesCanvas.height) / shapesCanvas.clientHeight;
+				const id = await shapeWorker.mouseMove(canvasRelativeX, canvasRelativeY)
+				shapesCanvas.style.cursor = id ? "pointer" : "default";
+				if (id) {
+					
+					// add tooltip
+					// this should be in an svg element that covers the canvas
+					// console.log(id);
+				}
+			});
+			shapesCanvas.addEventListener("mouseout", async(e) => {
+				shapeWorker.mouseOut();
+			});
+			shapesCanvas.addEventListener("mousedown", async(e) => {
+				const elementRelativeX = e.offsetX;
+				const elementRelativeY = e.offsetY;
+				const canvasRelativeX = (elementRelativeX * shapesCanvas.width) / shapesCanvas.clientWidth;
+				const canvasRelativeY = (elementRelativeY * shapesCanvas.height) / shapesCanvas.clientHeight;
+				shapeWorker.mouseDown(canvasRelativeX, canvasRelativeY)
+			});
+			shapesCanvas.addEventListener("mouseup", async(e) => {
+				shapeWorker.mouseUp()
+			});
 			const FWorker: Comlink.Remote<typeof FrameWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/framWorker.ts", import.meta.url), { type: "module" })
 			);
@@ -155,7 +185,7 @@ function createPizza() {
 
 					const grouped = rollup(
 						data,
-						(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
+						(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
@@ -240,7 +270,7 @@ function createPizza() {
 
 			updateRingSet = function () {
 				const movedRings = ringSet.filter((ring, i) => ring !== previousRingSet[i]);
-		
+
 				data.sort(
 					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
 				);
@@ -260,7 +290,7 @@ function createPizza() {
 						.sort((a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring))));
 					const grouped = rollup(
 						movedRings.length > 0 ? data.filter((d) => movedRings.includes(ringValue(d))) : data,
-						(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
+						(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
@@ -362,7 +392,7 @@ function createPizza() {
 						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 						const grouped = rollup(
 							data,
-							(D) => D.map<string>((d) => d[primaryColumn]).sort((a,b) => a.localeCompare(b)),
+							(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
 							(d) => sliceValue(d) || "undefined",
 							(d) => ringValue(d) || "undefined"
 						);

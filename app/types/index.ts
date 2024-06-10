@@ -98,6 +98,7 @@ declare global {
 		ring: string;
 		count?: number;
 	};
+	type ShapeDatum = {x: number; y: number; fill: string; d: string; id: string, fillStyleHidden: string};
 	type QueueJob = TransitionQueueTask | TimeQueueTask | EaseQueueTask;
 	/**
 	 * the available models in the database. Not every table is available for querying.

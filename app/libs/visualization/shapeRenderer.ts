@@ -3,7 +3,7 @@ import "d3-transition";
 import { timer } from "d3-timer";
 import { d3EasingFunctions } from "./easings";
 export class ShapeRenderer {
-	shapes: { x: number; y: number; d: string; fill: string; id: string }[] = [];
+	shapes: ShapeDatum[] = [];
 	duration: number = 200;
 	exitDuration: number = 0;
 	customElement: HTMLElement;
@@ -20,8 +20,21 @@ export class ShapeRenderer {
 		if (ease) this.ease = d3EasingFunctions[ease];
 	}
 
-	updateShapes(shapes: { x: number; y: number; d: string; fill: string; id: string }[]) {
-		// console.log("shapes updated in shapeRenderer", shapes.length);
+	dragShape(id:string, x: number, y: number) {
+		const { customElement, customClass } = this;
+		const datum = select(customElement)
+			.selectAll<HTMLElement, ShapeDatum>(`custom.${customClass}`)
+			.filter(d => d.id === id)
+			.attr("x", x)
+			.attr("y", y)
+			.each(function (d) {
+				d.x = x;
+				d.y = y;
+			})
+		this.transition(datum, 0);
+	}
+
+	updateShapes(shapes: ShapeDatum[]) {
 		this.shapes = shapes;
 		this.render();
 	}
@@ -34,7 +47,7 @@ export class ShapeRenderer {
 				return d.id || select(this).attr("id");
 			});
 
-		this.transition(dataBinding);
+		this.transition(dataBinding, this.duration);
 	}
 
 	render() {
@@ -61,16 +74,17 @@ export class ShapeRenderer {
 			.attr("x", (d) => d.x)
 			.attr("y", (d) => d.y)
 			.attr("fill", (d) => d.fill)
+			.attr("fillStyleHidden", d => d.fillStyleHidden)
 			.attr("d", (d) => this.generator(d) || "")
 			.attr("opacity", 0);
 		setTimeout(() => {
-			this.transition(dataBinding);
+			this.transition(dataBinding, this.duration);
 		}, 100);
 		
 	}
 
-	private transition(selection: Selection<HTMLElement, { x: number; y: number; d: string; fill: string; id: string }, BaseType, unknown>) {
-		const { draw, generator, duration, ease } = this;
+	private transition(selection: Selection<HTMLElement, ShapeDatum, BaseType, unknown>, duration:number) {
+		const { draw, generator, ease } = this;
 		const t = timer(function (elapsed) {
 			const el = Math.min(1, ease(elapsed / (duration + 100)));
 			if (draw) draw();

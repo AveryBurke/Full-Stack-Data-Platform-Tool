@@ -5,6 +5,7 @@ import rotateCoordinates from "../libs/rotateCoordinates";
 import { Lloyd } from "@/app/libs/webgl/llyod/lloyd";
 import { select } from "d3-selection";
 import { InternMap } from "d3-array";
+import { genColor } from "../libs/genColor";
 //@ts-ignore
 import { parseHTML } from "linkedom/worker";
 
@@ -12,11 +13,15 @@ import earcut from "earcut";
 import * as Comlink from "comlink";
 
 class ShapeWorker {
+	dragging = false;
+	draggedShape: string | null = null;
+	generateColor = genColor();
+	hiddenColorToId: { [color: string]: string } = {};
 	previousStreamChunk: number = 0;
 	currentShape = 0;
 	currentCount = 0;
 	currentSection = 0;
-	shapesById: { [id: string]: { x: number; y: number; d: string; fill: string; id: string } } = {};
+	shapesById: { [id: string]: ShapeDatum } = {};
 	customElement: HTMLElement;
 	shapeRenderer: InstanceType<typeof ShapeRenderer>;
 	lloyd: InstanceType<typeof Lloyd> | null = null;
@@ -29,8 +34,10 @@ class ShapeWorker {
 	numPoints: number = 50;
 	shapeCanvas: OffscreenCanvas | null = null;
 	glCanvas: OffscreenCanvas | null = null;
+	hiddenCanvas: OffscreenCanvas | null = null;
 	gl: WebGL2RenderingContext | null = null;
 	ctx: OffscreenCanvasRenderingContext2D | null = null;
+	hiddenCtx: OffscreenCanvasRenderingContext2D | null = null;
 	containerWidth = 1122;
 	containerHeight = 1122;
 	textureWidth = 312;
@@ -169,8 +176,8 @@ class ShapeWorker {
 			for (const shapes of sliceShapes) {
 				for (const shape of shapes) {
 					const [x, y] = rotateCoordinates(this.shapesById[shape].x, this.shapesById[shape].y, theta);
-						this.shapesById[shape].x = x;
-						this.shapesById[shape].y = y;
+					this.shapesById[shape].x = x;
+					this.shapesById[shape].y = y;
 				}
 			}
 		});
@@ -199,6 +206,7 @@ class ShapeWorker {
 		}
 		this.seedBoundryIds = seedBoundryIds;
 		this.seeds = seeds;
+		// console.log("seeds", seeds);
 	};
 
 	transferGLCanvas = (canvas: OffscreenCanvas) => {
@@ -212,7 +220,57 @@ class ShapeWorker {
 
 	transferShapeCanvas = (canvas: OffscreenCanvas) => {
 		this.shapeCanvas = canvas;
-		this.ctx = canvas.getContext("2d");
+		this.ctx = canvas.getContext("2d", { willReadFrequently: true });
+	};
+
+	transferHiddenCanvas = (canvas: OffscreenCanvas) => {
+		this.hiddenCanvas = canvas;
+		this.hiddenCtx = canvas.getContext("2d", { willReadFrequently: true });
+	};
+
+	mouseOut = () => {
+		this.dragging = false;
+		this.draggedShape = null;
+	};
+
+	mouseMove = (x: number, y: number) => {
+		// console.log("mouse move", x, y);
+		if (!this.shapeCanvas || !this.containerWidth || !this.containerHeight) return;
+		
+		// console.log("normalizedX", normalizedX);
+		// console.log("mouse move", x, y);
+		// if (this.dragging && id) this.dragShape(x, y);
+		if (this.dragging && this.draggedShape) this.dragShape(this.draggedShape, x, y);
+		return this.getShapeByLocation(x, y);
+	};
+
+	private getShapeByLocation = (x: number, y: number): string | null => {
+		if (!this.hiddenCtx) return null;
+		const data = this.hiddenCtx.getImageData(x, y, 1, 1).data;
+		return this.hiddenColorToId[`rgb(${data[0]},${data[1]},${data[2]})`] || null;
+	};
+
+	private dragShape = (id: string, x: number, y: number) => {
+		const { containerWidth, containerHeight, shapeCanvas } = this;
+		if (!containerWidth || !containerHeight || !shapeCanvas) return;
+
+		// Normalize the x and y values to the container
+		let normalizedX = (x - (shapeCanvas.width - containerWidth) / 2)/containerWidth;
+		let normalizedY = (y - (shapeCanvas.height - containerHeight) / 2)/containerHeight;
+
+		// convert x and y to vector space
+		// the draw funciton will convert the vector space to the container space
+		this.shapeRenderer.dragShape(id, (normalizedX * 2) - 1, -((normalizedY * 2) - 1));
+	};
+
+	mouseDown = (x: number, y: number) => {
+		this.dragging = true;
+		this.draggedShape = this.getShapeByLocation(x, y);
+	};
+
+	mouseUp = () => {
+		this.dragging = false;
+		this.draggedShape = null;
 	};
 
 	// Assigns the positions returned from the lloyd relaxation to the shapes.
@@ -285,7 +343,8 @@ class ShapeWorker {
 			const id = data[this.currentShape];
 			const x = payload[sortedXIndices[i]];
 			const y = payload[sortedXIndices[i] + 1];
-			this.shapesById[id] = { x, y, d: "", fill: "pink", id };
+			this.shapesById[id] = { x, y, d: "", fill: "pink", id, fillStyleHidden: this.generateColor() };
+			this.hiddenColorToId[this.shapesById[id].fillStyleHidden] = id;
 			if (this.currentShape === this.currentCount - 1) {
 				const previoiusSection = this.currentSection;
 				this.currentSection++;
@@ -328,11 +387,17 @@ class ShapeWorker {
 
 	draw = () => {
 		if (!this.ctx || !this.shapeCanvas || !this.pxd || !this.containerWidth || !this.containerHeight) return;
-		const { ctx, shapeCanvas, pxd, customElement, containerWidth, containerHeight, seedBoundryIds } = this;
+		const { ctx, shapeCanvas, pxd, customElement, containerWidth, containerHeight, hiddenCtx, hiddenCanvas } = this;
 		ctx.globalAlpha = 1;
 		ctx.save();
 		ctx.clearRect(0, 0, shapeCanvas.width * pxd, shapeCanvas.height * pxd);
 		ctx.lineWidth = 0.75;
+		if (hiddenCtx && hiddenCanvas) {
+			hiddenCtx.globalAlpha = 1;
+			hiddenCtx.save();
+			hiddenCtx.clearRect(0, 0, hiddenCanvas.width * pxd, hiddenCanvas.height * pxd);
+		}
+		console.log("drawing shapes");
 		select(customElement)
 			.selectAll("custom.shape")
 			.each(function (d: any, i) {
@@ -340,6 +405,7 @@ class ShapeWorker {
 				const x = +path.attr("x");
 				const y = +path.attr("y");
 				const fill = path.attr("fill");
+				const hiddenColor = path.attr("fillStyleHidden");
 				const opacity = path.attr("opacity");
 				ctx.globalAlpha = +opacity;
 				ctx.setTransform(pxd, 0, 0, pxd, (x * containerWidth) / 2 + shapeCanvas.width / 2, -(y * containerHeight) / 2 + shapeCanvas.height / 2);
@@ -347,6 +413,14 @@ class ShapeWorker {
 				ctx.beginPath();
 				ctx.arc(0, 0, 5, 0, 2 * Math.PI);
 				ctx.fill();
+				if (hiddenCtx && hiddenCanvas) {
+					hiddenCtx.globalAlpha = 1;
+					hiddenCtx.setTransform(pxd, 0, 0, pxd, (x * containerWidth) / 2 + hiddenCanvas.width / 2, -(y * containerHeight) / 2 + hiddenCanvas.height / 2);
+					hiddenCtx.fillStyle = hiddenColor;
+					hiddenCtx.beginPath();
+					hiddenCtx.arc(0, 0, 5, 0, 2 * Math.PI);
+					hiddenCtx.fill();
+				}
 			});
 		ctx.restore();
 	};

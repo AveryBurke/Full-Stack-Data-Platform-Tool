@@ -15,7 +15,7 @@ const page = () => {
 	const [render, setRender] = useState(false);
 	useEffect(() => {
 		if (ref.current && !render && refCanvas.current) {
-			pizzaRef.current.primaryColumn("internalId")
+			pizzaRef.current.primaryColumn("internalId");
 			pizzaRef.current.ratio(window.devicePixelRatio);
 			pizzaRef.current.margin({ top: 120, right: 220, bottom: 0, left: 220 });
 			pizzaRef.current.canvasWidth(refCanvas.current.width);
@@ -38,30 +38,38 @@ const page = () => {
 	}, [render, select, ref.current]);
 
 	return (
-		<div ref={ref} className="relative p-4">
-			<div className="absolute z-2 pr-4">
-			<canvas
-					// ref={refCanvas}
-					id="webgl"
-					width={1280 * window.devicePixelRatio}
-					height={720 * window.devicePixelRatio}
-					className="absolute w-full h-full z-0 bg-transparent aspect-video"
-				/>
-				<canvas
-					id="shapes"
-					width={1280 * window.devicePixelRatio}
-					height={720 * window.devicePixelRatio}
-					className="w-full h-full z-3 bg-transparent aspect-video"
-				/>
+		<div className="p-4">
+			<div ref={ref} className="relative">
 				
+				<div className="absolute bg-transparent w-full h-full z-10">
+					<canvas
+						id="shapes"
+						width={1280 * window.devicePixelRatio}
+						height={720 * window.devicePixelRatio}
+						className="absolute w-full h-full z-10 bg-transparent aspect-video"
+					/>
+					<canvas
+						id="hidden"
+						width={1280 * window.devicePixelRatio}
+						height={720 * window.devicePixelRatio}
+						className="absolute w-full h-full bg-transparent aspect-video hidden"
+					/>
+					<canvas
+						id="webgl"
+						width={1280 * window.devicePixelRatio}
+						height={720 * window.devicePixelRatio}
+						className="absolute w-full h-full -z-10 bg-transparent aspect-video"
+					/>
+				</div>
+
+				<canvas
+					ref={refCanvas}
+					id="background"
+					width={1280 * window.devicePixelRatio}
+					height={720 * window.devicePixelRatio}
+					className="w-full h-full bg-slate-50 aspect-video -z-10"
+				/>
 			</div>
-			<canvas
-				ref={refCanvas}
-				id="background"
-				width={1280 * window.devicePixelRatio}
-				height={720 * window.devicePixelRatio}
-				className="w-full h-full z-0 bg-slate-50 aspect-video"
-			/>
 		</div>
 	);
 };
