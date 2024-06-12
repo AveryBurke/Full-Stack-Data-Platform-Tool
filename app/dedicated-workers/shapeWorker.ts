@@ -397,7 +397,6 @@ class ShapeWorker {
 			hiddenCtx.save();
 			hiddenCtx.clearRect(0, 0, hiddenCanvas.width * pxd, hiddenCanvas.height * pxd);
 		}
-		console.log("drawing shapes");
 		select(customElement)
 			.selectAll("custom.shape")
 			.each(function (d: any, i) {

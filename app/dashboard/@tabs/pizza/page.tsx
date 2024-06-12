@@ -40,7 +40,6 @@ const page = () => {
 	return (
 		<div className="p-4">
 			<div ref={ref} className="relative">
-				
 				<div className="absolute bg-transparent w-full h-full z-10">
 					<canvas
 						id="shapes"

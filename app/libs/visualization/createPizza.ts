@@ -7,6 +7,7 @@ import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
 import { FrameWorker } from "@/app/dedicated-workers/framWorker";
 import { ShapeWorker } from "@/app/dedicated-workers/shapeWorker";
+import { act } from "react";
 
 function createPizza() {
 	let data: any[],
@@ -19,6 +20,7 @@ function createPizza() {
 		margin: { top: number; right: number; bottom: number; left: number },
 		canvasWidth: number,
 		canvasHeight: number,
+		tooltipData: string[] = ["official_title", "phase"],
 		updateData: () => void,
 		updateSliceColumn: () => void,
 		updateRingColumn: () => void,
@@ -74,7 +76,9 @@ function createPizza() {
 				sliceColors = Object.fromEntries(sliceSet.map((slice, i) => [slice, colorPallet[i % colorPallet.length]])),
 				// flags
 				resetRings = false,
-				resetSlices = false;
+				resetSlices = false,
+				active: string | null = null,
+				dragging = false;
 
 			// sort data according to the slice and ring sets
 			data.sort(
@@ -99,32 +103,82 @@ function createPizza() {
 			shapeWorker.transferShapeCanvas(Comlink.transfer(offfscreenShapesCanvas, [offfscreenShapesCanvas]));
 			shapeWorker.transferGLCanvas(Comlink.transfer(offscreenGLCanvas, [offscreenGLCanvas]));
 			shapeWorker.transferHiddenCanvas(Comlink.transfer(offscreenHiddenCanvas, [offscreenHiddenCanvas]));
-			shapesCanvas.addEventListener("mousemove", async(e) => {
+
+			shapesCanvas.addEventListener("mousemove", async (e) => {
+				e.preventDefault();
 				const elementRelativeX = e.offsetX;
 				const elementRelativeY = e.offsetY;
 				const canvasRelativeX = (elementRelativeX * shapesCanvas.width) / shapesCanvas.clientWidth;
 				const canvasRelativeY = (elementRelativeY * shapesCanvas.height) / shapesCanvas.clientHeight;
-				const id = await shapeWorker.mouseMove(canvasRelativeX, canvasRelativeY)
+				console.log(canvasRelativeX, canvasRelativeY);
+				console.log(e.offsetX, e.offsetY);
+				console.log(e.pageX, e.pageY);
+				console.log(shapesCanvas.getBoundingClientRect());
+				const id = await shapeWorker.mouseMove(canvasRelativeX, canvasRelativeY);
 				shapesCanvas.style.cursor = id ? "pointer" : "default";
-				if (id) {
-					
-					// add tooltip
-					// this should be in an svg element that covers the canvas
-					// console.log(id);
+				if (id && !dragging) {
+					active = id;
+				} else {
+					active = null;
+					select("#tooltip").style("visibility", "hidden");
 				}
 			});
-			shapesCanvas.addEventListener("mouseout", async(e) => {
+			shapesCanvas.addEventListener("mouseout", async (e) => {
+				dragging = false;
+				e.preventDefault();
 				shapeWorker.mouseOut();
 			});
-			shapesCanvas.addEventListener("mousedown", async(e) => {
+			shapesCanvas.addEventListener("mousedown", async (e) => {
+				e.preventDefault();
+				dragging = true;
+				select("#tooltip").style("visibility", "hidden");
 				const elementRelativeX = e.offsetX;
 				const elementRelativeY = e.offsetY;
 				const canvasRelativeX = (elementRelativeX * shapesCanvas.width) / shapesCanvas.clientWidth;
 				const canvasRelativeY = (elementRelativeY * shapesCanvas.height) / shapesCanvas.clientHeight;
-				shapeWorker.mouseDown(canvasRelativeX, canvasRelativeY)
+				shapeWorker.mouseDown(canvasRelativeX, canvasRelativeY);
 			});
-			shapesCanvas.addEventListener("mouseup", async(e) => {
-				shapeWorker.mouseUp()
+			shapesCanvas.onclick = async (e) => {
+				e.preventDefault();
+				if (!active) return;
+				const datum = data.find((d) => d[primaryColumn] === active);
+				// the tooltip div is a child of the main div
+				// so we have to use the pageX and pageY to position it.
+				// This violates my rule of keeping react and d3 separate.
+				const tooltipNod = select("#tooltip").node() as HTMLDivElement;
+				const tooltipRect = tooltipNod.getBoundingClientRect();
+				const tooltipOverflowe = tooltipRect.width + tooltipRect.left > window.innerWidth;
+				console.log(tooltipOverflowe);
+				const tooltip = select("#tooltip");
+
+				tooltip
+				.style("visibility", "visible")
+				.html(
+					Object.entries(datum)
+						.filter((entry) => tooltipData.includes(entry[0]))
+						.map(([key, value]) => `<div><b>${key}</b>: ${value}</div>`)
+						.join(" ")
+				)
+				
+				
+
+				tooltip
+					.style("width", () => {
+						const tooltipRect = (tooltip.node() as HTMLDivElement).getBoundingClientRect();
+						const width = e.pageX + tooltipRect.width/2 > document.documentElement.scrollWidth ? document.documentElement.scrollWidth - e.pageX : tooltipRect.width;
+						return `${width}px`;
+					})
+					.style("top", "auto")
+					.style("bottom", `${document.documentElement.scrollHeight - e.pageY + 10}px`)
+					.style("left", () => {
+						return `${e.pageX - (tooltip.node() as HTMLDivElement).getBoundingClientRect().width / 2}px`;
+					})
+					
+			};
+			shapesCanvas.addEventListener("mouseup", async (e) => {
+				e.preventDefault();
+				dragging = false;
+				shapeWorker.mouseUp();
 			});
 			const FWorker: Comlink.Remote<typeof FrameWorker> = Comlink.wrap(
 				new Worker(new URL("../../dedicated-workers/framWorker.ts", import.meta.url), { type: "module" })
@@ -232,7 +286,7 @@ function createPizza() {
 				// In theory, changing the duration for each ring transition to a precentage of half a resonable duration
 				// should make the total transition time reasonable.
 				// In practice, this is not the case when the ring set is over about 30 rings.
-				// This discrepancy could be cause by a large number of d3 transition updates happening in rapid succession.
+				// This discrepancy could be caused by a large number of d3 transition updates happening in rapid succession.
 				// For now the solution is to chunk the ring transitions into a few groups when the ring set is large.
 
 				const cb = (input: Section[][]) => {

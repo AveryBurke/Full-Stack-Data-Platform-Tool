@@ -1,18 +1,28 @@
-import React from 'react'
-import ResizablePane from '@/app/components/resizableWindows/ResizableWindow'
+import React from "react";
+import ResizablePane from "@/app/components/resizableWindows/ResizableWindow";
 
 interface LayoutProps {
-  children: React.ReactNode,
-  codeEditor: React.ReactNode,
-  sidebar: React.ReactNode,
-  tabs: React.ReactNode
-  input: React.ReactNode
+	children: React.ReactNode;
+	codeEditor: React.ReactNode;
+	sidebar: React.ReactNode;
+	tabs: React.ReactNode;
+	input: React.ReactNode;
 }
 
-const layout:React.FC<LayoutProps> = ({children, codeEditor, sidebar, tabs, input}) => {
-  return (
-    <div className={`realtive h-screen w-screen flex-grow flex flex-row`}>
-			<ResizablePane minSize={0} initialSize={200} maxSize={200} growDirection="right" bgColor={"bg-[#282a36]"} additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]" >
+const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, input }) => {
+	return (
+		<div className={`realtive h-screen w-screen flex-grow flex flex-row overflow-auto`}>
+			<div
+				id="tooltip"
+				style={{ visibility: "hidden" }}
+				className="absolute block max-w-full max-h-full z-20 shadow-lg bg-[#333] text-white font-semibold px-3 py-[6px] text-[13px] mx-auto w-max -top-10 rounded before:w-4 before:h-4 before:rotate-45 before:bg-[#333] before:absolute before:z-[-1] before:-bottom-1 before:left-0  before:right-0 before:mx-auto"></div>
+			<ResizablePane
+				minSize={0}
+				initialSize={200}
+				maxSize={200}
+				growDirection="right"
+				bgColor={"bg-[#282a36]"}
+				additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">
 				{sidebar}
 			</ResizablePane>
 			<div className={`h-screen w-screen flex-grow flex flex-col`}>
@@ -39,7 +49,7 @@ const layout:React.FC<LayoutProps> = ({children, codeEditor, sidebar, tabs, inpu
 				{tabs}
 			</ResizablePane>
 		</div>
-  )
-}
+	);
+};
 
-export default layout
+export default layout;
