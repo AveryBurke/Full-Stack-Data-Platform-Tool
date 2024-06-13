@@ -110,10 +110,6 @@ function createPizza() {
 				const elementRelativeY = e.offsetY;
 				const canvasRelativeX = (elementRelativeX * shapesCanvas.width) / shapesCanvas.clientWidth;
 				const canvasRelativeY = (elementRelativeY * shapesCanvas.height) / shapesCanvas.clientHeight;
-				console.log(canvasRelativeX, canvasRelativeY);
-				console.log(e.offsetX, e.offsetY);
-				console.log(e.pageX, e.pageY);
-				console.log(shapesCanvas.getBoundingClientRect());
 				const id = await shapeWorker.mouseMove(canvasRelativeX, canvasRelativeY);
 				shapesCanvas.style.cursor = id ? "pointer" : "default";
 				if (id && !dragging) {
@@ -145,35 +141,32 @@ function createPizza() {
 				// the tooltip div is a child of the main div
 				// so we have to use the pageX and pageY to position it.
 				// This violates my rule of keeping react and d3 separate.
-				const tooltipNod = select("#tooltip").node() as HTMLDivElement;
-				const tooltipRect = tooltipNod.getBoundingClientRect();
-				const tooltipOverflowe = tooltipRect.width + tooltipRect.left > window.innerWidth;
-				console.log(tooltipOverflowe);
-				const tooltip = select("#tooltip");
-
-				tooltip
-				.style("visibility", "visible")
-				.html(
-					Object.entries(datum)
-						.filter((entry) => tooltipData.includes(entry[0]))
-						.map(([key, value]) => `<div><b>${key}</b>: ${value}</div>`)
-						.join(" ")
-				)
-				
-				
-
-				tooltip
-					.style("width", () => {
-						const tooltipRect = (tooltip.node() as HTMLDivElement).getBoundingClientRect();
-						const width = e.pageX + tooltipRect.width/2 > document.documentElement.scrollWidth ? document.documentElement.scrollWidth - e.pageX : tooltipRect.width;
-						return `${width}px`;
-					})
+	
+				// render the tooltip, but keep it hidden		
+				select("#tooltip")
+					.html(
+						Object.entries(datum)
+							.filter((entry) => tooltipData.includes(entry[0]))
+							.map(([key, value]) => `<div><b>${key}</b>: ${value}</div>`)
+							.join(" ")
+					)
+					.style("width", "auto")
 					.style("top", "auto")
 					.style("bottom", `${document.documentElement.scrollHeight - e.pageY + 10}px`)
-					.style("left", () => {
-						return `${e.pageX - (tooltip.node() as HTMLDivElement).getBoundingClientRect().width / 2}px`;
+					.style("left", `${0}px`);
+			
+				// get the width of the tooltip
+				let width = (select("#tooltip").node() as HTMLDivElement).getBoundingClientRect().width;
+				
+				// use the width to position the tooltip
+				select("#tooltip")
+					.style("width", () => {
+						if (e.pageX + width / 2 > document.documentElement.clientWidth) width = ((document.documentElement.clientWidth - e.pageX) * 2) - 20;
+						return `${width}px`;
 					})
-					
+					.style("left", `${e.pageX - width / 2}px`)
+					.style("visibility", "visible");
+				
 			};
 			shapesCanvas.addEventListener("mouseup", async (e) => {
 				e.preventDefault();
