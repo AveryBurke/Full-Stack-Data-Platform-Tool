@@ -12,7 +12,7 @@ const page = () => {
 	const { filterKey, filterSet, setFilterKey, setFilterSet } = useFilterState();
 
 	return (
-		<ul className="flex flex-col gap-6">
+		<ul className="flex flex-col flex-grow gap-6">
 			<li>
 				<SidebarComponentWrapper title="slice" currentKey={sliceKey} options={options} handleChange={setSliceKey} handleReset={() => setSliceKey("")}>
 					<ControlPanel set={sliceSet} onChange={setSliceSet} counts={sliceCounts} />

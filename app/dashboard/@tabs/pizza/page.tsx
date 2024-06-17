@@ -9,7 +9,7 @@ const page = () => {
 	const { data } = useQueryStore();
 	const ref = useRef<HTMLDivElement>(null);
 	const refCanvas = useRef<HTMLCanvasElement>(null);
-	const { ringKey, sliceKey, sliceSet, ringSet } = usePizzaState();
+	const { ringKey, sliceKey, sliceSet, ringSet, tooltip } = usePizzaState();
 	const pizzaRef = useRef(createPizza());
 	useChartUpdates(pizzaRef);
 	const [render, setRender] = useState(false);
@@ -22,6 +22,7 @@ const page = () => {
 			pizzaRef.current.canvasHeight(refCanvas.current.height);
 			pizzaRef.current.data(data);
 			pizzaRef.current.sliceColumn(sliceKey);
+			pizzaRef.current.tooltipData(tooltip);
 			//@ts-ignore
 			pizzaRef.current.sliceSet(sliceSet.map((slice) => (slice ??= undefined)));
 			pizzaRef.current.ringColumn(ringKey);

@@ -8,7 +8,7 @@ import deepEqual from "deep-equal";
 // make the ref chart and the sidebar reactive to changes in the data, filters, ring and slice keys
 export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) => {
 	const { data } = useQueryStore();
-	const { ringKey, ringSet, sliceKey, sliceSet, setRingSet, setSliceSet, setOptions, setSliceCounts, setRingCounts } = usePizzaState();
+	const { ringKey, ringSet, sliceKey, sliceSet, tooltip, setRingSet, setSliceSet, setOptions, setSliceCounts, setRingCounts, setTooltip } = usePizzaState();
 	const { filterKey, filterSet, setFilterSet } = useFilterState();
 	const numberOfSliceUpdate = useRef(0);
 	const numberOfRingUpdate = useRef(0);
@@ -69,6 +69,12 @@ export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) 
 		if (!ref.current) return;
 		ref.current.sliceSet(sliceSet);
 	}, [sliceSet, ref.current]);
+
+	// update the tooltip data in the pizza chart, when the tooltip in state changes
+	useEffect(() => {
+		if (!ref.current) return;
+		ref.current.tooltipData(tooltip);
+	}, [tooltip, ref.current]);
 
 	// update the data in the pizza chart, when the data in state changes or when the filter set changes (but not the filter key)
 	useEffect(() => {

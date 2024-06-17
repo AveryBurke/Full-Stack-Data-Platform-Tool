@@ -7,7 +7,6 @@ import * as Comlink from "comlink";
 import { BackgroundWorker } from "@/app/dedicated-workers/backgroundWorker";
 import { FrameWorker } from "@/app/dedicated-workers/framWorker";
 import { ShapeWorker } from "@/app/dedicated-workers/shapeWorker";
-import { act } from "react";
 
 function createPizza() {
 	let data: any[],
@@ -20,8 +19,9 @@ function createPizza() {
 		margin: { top: number; right: number; bottom: number; left: number },
 		canvasWidth: number,
 		canvasHeight: number,
-		tooltipData: string[] = ["official_title", "phase"],
+		tooltipData: string[],
 		updateData: () => void,
+		updateTooltipData: () => void,
 		updateSliceColumn: () => void,
 		updateRingColumn: () => void,
 		updateRingSet: () => void,
@@ -137,12 +137,15 @@ function createPizza() {
 			shapesCanvas.onclick = async (e) => {
 				e.preventDefault();
 				if (!active) return;
+				if (tooltipData.length === 0) return;
+				// get the data for the currently selected shape
 				const datum = data.find((d) => d[primaryColumn] === active);
 				// the tooltip div is a child of the main div
 				// so we have to use the pageX and pageY to position it.
 				// This violates my rule of keeping react and d3 separate.
 	
-				// render the tooltip, but keep it hidden		
+				// render the tooltip, but keep it hidden
+				const parentRect = (select("#parent").node() as HTMLDivElement).getBoundingClientRect();
 				select("#tooltip")
 					.html(
 						Object.entries(datum)
@@ -152,7 +155,7 @@ function createPizza() {
 					)
 					.style("width", "auto")
 					.style("top", "auto")
-					.style("bottom", `${document.documentElement.scrollHeight - e.pageY + 10}px`)
+					.style("bottom", `${parentRect.height - e.pageY + 10}px`)
 					.style("left", `${0}px`);
 			
 				// get the width of the tooltip
@@ -268,6 +271,8 @@ function createPizza() {
 				frameWorker.updateRingHeights(ringHeights);
 				frameWorker.getFrames(Comlink.proxy(cb));
 			};
+
+			updateTooltipData = function () {};
 
 			updateRingColumn = function () {
 				data.sort(
@@ -531,6 +536,12 @@ function createPizza() {
 
 	chart.ratio = function (value: number) {
 		ratio = value;
+		return chart;
+	};
+
+	chart.tooltipData = function (value: string[]) {
+		tooltipData = value;
+		if (typeof updateTooltipData === "function") updateTooltipData();
 		return chart;
 	};
 

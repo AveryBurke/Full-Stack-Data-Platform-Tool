@@ -6,7 +6,7 @@ interface SidebarLayoutProps {
 
 const sidebarLayout: React.FC<SidebarLayoutProps> = ({ children }) => {
 	return (
-		<aside className="p-2 pb-6 h-screen w-full bg-[#282a36] overflow-y-scroll">
+		<aside id="sidebar" className="p-2 pb-6 h-full w-full bg-[#282a36] overflow-y-scroll">
 			<div className="p-2 pb-2 flex justify-center items-center">
                 <span className="text-2xl text-white tracking-wide">sidebar</span>
 				{/* <img src={logo} className={`overflow-hidden transition-all ${expanded ? "w-32" : "w-0"}`} />

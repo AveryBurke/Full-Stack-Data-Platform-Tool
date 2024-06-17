@@ -7,6 +7,7 @@ export interface PizzaState {
 	ringCounts: { [key: string]: { current: number; prev: number } };
 	sliceKey: string;
 	sliceSet: string[];
+	tooltip: string[];
 	sliceCounts: { [key: string]: { current: number; prev: number } };
 	options: { value: string; label: string }[];
 	setRingKey: (ringKey: string) => void;
@@ -16,6 +17,7 @@ export interface PizzaState {
 	setSliceSet: (sliceSet: string[]) => void;
 	setSliceCounts: (sliceCounts: { [key: string]: number }) => void;
 	setOptions: (options: { value: string; label: string }[]) => void;
+	setTooltip: (tooltip: string[]) => void;
 }
 
 export const usePizzaState = create<PizzaState>()(
@@ -27,6 +29,7 @@ export const usePizzaState = create<PizzaState>()(
 			sliceKey: "",
 			sliceSet: [],
 			sliceCounts: {},
+			tooltip: [],
 			options: [],
 			setRingKey: (ringKey: string) => set({ ringKey }),
 			setRingSet: (ringSet: string[]) => set({ ringSet }),
@@ -45,6 +48,8 @@ export const usePizzaState = create<PizzaState>()(
 				set({ sliceCounts: newSliceCounts });
 			},
 			setOptions: (options: { value: string; label: string }[]) => set({ options }),
+			setTooltip: (tooltip: string[]) => set({ tooltip }),
+			getTooltip: () => get().tooltip,
 		}),
 		{
 			name: "pizza-store",

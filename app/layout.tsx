@@ -5,6 +5,7 @@ import "tabulator-tables/dist/css/tabulator.min.css";
 import Script from "next/script";
 import HydrationBoundary from "./components/HydrationBoundry";
 import ToasterProvider from "./providers/ToastProivder";
+import TooltipSettingsModal from "./components/modal/TooltipSettingsModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
 			<body className={inter.className}>
 				<HydrationBoundary>
 					<ToasterProvider />
+					<TooltipSettingsModal />
 					{children}
 				</HydrationBoundary>
 			</body>
