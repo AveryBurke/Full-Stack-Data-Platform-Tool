@@ -98,7 +98,7 @@ declare global {
 		ring: string;
 		count?: number;
 	};
-	type ShapeDatum = {x: number; y: number; fill: string; d: string; id: string, fillStyleHidden: string};
+	type ShapeDatum = { x: number; y: number; fill: string; d: string; id: string; fillStyleHidden: string };
 	type QueueJob = TransitionQueueTask | TimeQueueTask | EaseQueueTask;
 	/**
 	 * the available models in the database. Not every table is available for querying.
@@ -120,6 +120,22 @@ declare global {
 		| "get_example_rows"
 		| "request_data_from_db";
 	type AvailableTools = { [key in Tool]?: (...args: string[]) => Promise<string> };
+
+	/**
+	 * the options for the sidebar component
+	 */
+	type SidebarComponentOptions = {
+		/**
+		 * options for the sidebar's tool tip
+		*/
+		tooltip?: {
+			header: string;
+			/**
+			 * each string in the array is a new line in the tooltip
+			 */
+			body?: string[];
+		};
+	};
 }
 
 export {};

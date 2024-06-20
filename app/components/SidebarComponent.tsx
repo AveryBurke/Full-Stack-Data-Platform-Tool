@@ -19,15 +19,15 @@ interface SidebarComponentWrapperProps {
 	title: string;
 	options: { value: string; label: string }[];
 	children?: React.ReactNode;
-	tooltipText?: string;
+	sidebarComponentOptions?: SidebarComponentOptions;
 	handleChange: (key: string) => void;
 	handleReset: () => void;
 }
 
-const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset, tooltipText }) => {
+const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset, sidebarComponentOptions }) => {
 	const [heightOn, setHeightOn] = useState(false);
 	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
-	const { setCoords, setColor, setTextColor, setText, onOpen, onClose, isOpen } = useTooltip();
+	const { setCoords, setHeader, setBody, onOpen, onClose, isOpen } = useTooltip();
 	const numberOfRender = useRef(0);
 	const uiReady = useRef(false);
 
@@ -56,9 +56,15 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 		if (!refChevron.current) return;
 		if (isOpen) return;
 		const bb = refChevron.current.getBoundingClientRect();
-		setText(tooltipText || `choose a ${title} column`);
-		setColor("slate-50");
-		setTextColor("[#f4f4f4]");
+		
+		if (sidebarComponentOptions?.tooltip) {
+			const { tooltip } = sidebarComponentOptions;
+			setHeader(tooltip.header);
+			setBody(tooltip.body || []);
+		} else {
+			setHeader(title);
+			setBody([]);
+		}
 		setCoords({ x: bb.x + bb.width, y: bb.y });
 		onOpen();
 	};

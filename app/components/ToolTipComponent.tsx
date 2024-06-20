@@ -3,17 +3,24 @@ import React from "react";
 import useTooltip from "../hooks/useTooltip";
 
 const TooltipComponent: React.FC = () => {
-	const { coords:{x,y}, text, backgroundColor, textColor, isOpen } = useTooltip();
+	const {
+		coords: { x, y },
+		header,
+		body,
+		isOpen,
+	} = useTooltip();
 	return (
-		<span
-			style={{top: `${y - 30}px`, left: `${x}px`, zIndex: 100}}
-			className={` max-w-[400px] text-pretty text-sm rounded-sm pointer-events-none absolute -translate-x-1/2 shadow-sm bg-${
-				backgroundColor || "neutral-800"
-			} px-2 py-1 text-${textColor || "white"} opacity-${
-				isOpen ? "100" : "0"
-			} before:absolute before:left-1/2 before:top-full before:-translate-x-1/2 before:border-4 before:border-transparent before:content-[''] transition-opacity duration-300`}>
-			{text}
-		</span>
+		<div
+			className={`absolute p-2 bg-slate-50 text-slate-800 border border-gray-300 rounded-md shadow-md z-50`}
+			style={{ top: y, left: x, display: isOpen ? "flex" : "none", flexDirection: "column" }}>
+			<h3 className="font-bold text-center">{header}</h3>
+			{body.length > 0 && <hr className="my-2" />}
+			{body.map((line, index) => (
+				<span key={index} className="text-sm text-slate-600">
+					{line}
+				</span>
+			))}
+		</div>
 	);
 };
 
