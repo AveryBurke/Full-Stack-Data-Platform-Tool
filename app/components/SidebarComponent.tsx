@@ -27,7 +27,7 @@ interface SidebarComponentWrapperProps {
 const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset, sidebarComponentOptions }) => {
 	const [heightOn, setHeightOn] = useState(false);
 	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
-	const { setCoords, setHeader, setBody, onOpen, onClose, isOpen } = useTooltip();
+	const { setCoords, setHeader, setBody, setAlignment, onOpen, onClose, isOpen } = useTooltip();
 	const numberOfRender = useRef(0);
 	const uiReady = useRef(false);
 
@@ -61,6 +61,8 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 			const { tooltip } = sidebarComponentOptions;
 			setHeader(tooltip.header);
 			setBody(tooltip.body || []);
+			setAlignment(tooltip.alignment || { x: "right", y: "center" });
+			
 		} else {
 			setHeader(title);
 			setBody([]);

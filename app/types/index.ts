@@ -127,13 +127,17 @@ declare global {
 	type SidebarComponentOptions = {
 		/**
 		 * options for the sidebar's tool tip
-		*/
+		 */
 		tooltip?: {
 			header: string;
 			/**
 			 * each string in the array is a new line in the tooltip
 			 */
-			body?: string[];
+			body?: string[];	
+			/**
+			 * the alignment of the tooltip relative to the element that triggered it
+			 */
+			alignment?: { x: "center" | "left" | "right"; y: "center" | "top" | "bottom" };
 		};
 	};
 }

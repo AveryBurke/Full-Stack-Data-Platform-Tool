@@ -11,14 +11,16 @@ interface PlayButtonProps {
 
 const PlayButton: React.FC<PlayButtonProps> = ({ handlePlay, loading }) => {
 	const ref = useRef<HTMLDivElement>(null);
-	const { setCoords, setHeader, setBody, onOpen, onClose, isOpen } = useTooltip(); 
+	const { setCoords, setHeader, setBody, onOpen, onClose, setAlignment, isOpen } = useTooltip(); 
 	const handleMouseEnter = (e:MouseEvent) => {
 		if (!ref.current) return;
 		if (isOpen) return;
 		const bb = ref.current.getBoundingClientRect();
 		setHeader("Run Query");
 		setBody(["Execute the current query and overwire the current data set with the results"]);
-		setCoords({ x: bb.x + bb.width, y: bb.y - bb.height * 2});
+		setAlignment({ x: "right", y: "top" });
+		setCoords({ x:bb.x + bb.width, y: bb.y});
+
 		onOpen();
 	}
 

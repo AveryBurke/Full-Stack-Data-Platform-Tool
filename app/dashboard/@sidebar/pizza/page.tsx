@@ -42,6 +42,7 @@ const page = () => {
 								"If no column is selected, data will be overwritten when the data set is updated",
 								"The values in this column must be unique for each row in the data set",
 							],
+							alignment: { x: "right", y: "center"}
 						},
 					}}
 				/>
@@ -57,7 +58,9 @@ const page = () => {
 						tooltip: {
 							header: "Slice Column",
 							body: ["Group the data into slices, based on the values in this column."],
+							alignment: { x: "right", y: "center"}
 						},
+						
 					}}>
 					<ControlPanel set={sliceSet} onChange={setSliceSet} counts={sliceCounts} />
 				</SidebarComponentWrapper>
@@ -89,6 +92,7 @@ const page = () => {
 						tooltip: {
 							header: "Filter Column",
 							body: ["Filter the data based on the values in this column."],
+							alignment: { x: "right", y: "top"}
 						},
 					}}>
 					<CheckBoxControlePanel set={filterSet} onChange={setFilterSet} />
