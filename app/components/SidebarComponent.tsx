@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useHeight } from "@/app/hooks/useHeight";
-import Select from "react-select";
+import useTooltip from "@/app/hooks/useTooltip";
+import Select, { components as C, DropdownIndicatorProps, SingleValue } from "react-select";
 import { useSpring, animated } from "react-spring";
 import { easings } from "@react-spring/web";
 import camelToFlat from "@/app/libs/camelToFlat";
@@ -17,14 +18,17 @@ interface SidebarComponentWrapperProps {
 	currentKey: string;
 	title: string;
 	options: { value: string; label: string }[];
-	children: React.ReactNode;
+	children?: React.ReactNode;
+	tooltipText?: string;
 	handleChange: (key: string) => void;
 	handleReset: () => void;
 }
 
-const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset }) => {
+const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset, tooltipText }) => {
 	const [heightOn, setHeightOn] = useState(false);
 	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
+	const { setCoords, setColor, setTextColor, setText, onOpen, onClose, isOpen } = useTooltip();
+	const numberOfRender = useRef(0);
 	const uiReady = useRef(false);
 
 	// wait until the compnent has rendered to pass a ref
@@ -46,15 +50,77 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 		onRest: () => (uiReady.current = true),
 	});
 
+	const refChevron = useRef<HTMLDivElement>(null);
+
+	const handleMouseEnter = () => {
+		if (!refChevron.current) return;
+		if (isOpen) return;
+		const bb = refChevron.current.getBoundingClientRect();
+		setText(tooltipText || `choose a ${title} column`);
+		setColor("slate-50");
+		setTextColor("[#f4f4f4]");
+		setCoords({ x: bb.x + bb.width, y: bb.y });
+		onOpen();
+	};
+
+	const handleMouseLeave = () => {
+		if (!isOpen) return;
+		onClose();
+	};
+
+	useEffect(() => {
+		numberOfRender.current++;
+		if (refChevron.current && numberOfRender.current >= 2) {
+			refChevron.current.addEventListener("mouseenter", handleMouseEnter);
+			refChevron.current.addEventListener("mouseleave", handleMouseLeave);
+		}
+		return () => {
+			if (refChevron.current) {
+				refChevron.current.removeEventListener("mouseenter", handleMouseEnter);
+				refChevron.current.removeEventListener("mouseleave", handleMouseLeave);
+			}
+		};
+	}, [refChevron.current, handleMouseEnter, handleMouseLeave]);
+
+	// override the default dropdown indicator
+	// in order to add a ref and listeners for mouse enter and mouse leave, for the toolthip
+	const DropdownIndicator = (props: DropdownIndicatorProps) => {
+		return (
+			<div id={title + "-indicator-wrapper"} key={title + "-wrapper"} ref={refChevron}>
+				<C.DropdownIndicator {...props}>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						className="feather feather-chevron-down">
+						<polyline points="6 9 12 15 18 9"></polyline>
+					</svg>
+				</C.DropdownIndicator>
+			</div>
+		);
+	};
+
+	const components = {
+		DropdownIndicator,
+	};
+
 	return (
 		<div key="contrainer" id={`${title}_sidebar-component`}>
 			<div className="w-full flex flex-row justify-between items-baseline text-slate-50">
-				<span className="text-xl font-bold tracking-widest text-[#e6c07b]">{title}</span>
-				<div className="text-sm font-light cursor-pointer active:text-red-300" hidden={!currentKey.length} onClick={() => handleReset()}>
+				<span className="font-bold tracking-wide text-[#e6c07b]">{title}</span>
+				<div className="text-xs font-light cursor-pointer active:text-red-300" hidden={!currentKey.length} onClick={() => handleReset()}>
 					reset
 				</div>
 			</div>
 			<Select
+				//@ts-ignore
+				components={components}
 				styles={{
 					container: (baseStyles, state) => ({
 						...baseStyles,
@@ -98,7 +164,7 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 								label: camelToFlat(currentKey).replace("_", " "),
 						  }
 				}
-				onChange={(e) => (e ? handleChange(e.value) : console.log(e))}
+				onChange={(e) => (e ? handleChange((e as SingleValue<{ value: string; label: string }>)!.value) : console.log(e))}
 				id={`${title}_select`}
 			/>
 			<animated.div style={{ ...heightStyles, overflow: "hidden" }}>

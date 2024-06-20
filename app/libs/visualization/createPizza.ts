@@ -21,6 +21,7 @@ function createPizza() {
 		canvasHeight: number,
 		tooltipData: string[],
 		updateData: () => void,
+		updatePrimaryColumn: () => void,
 		updateTooltipData: () => void,
 		updateSliceColumn: () => void,
 		updateRingColumn: () => void,
@@ -273,7 +274,8 @@ function createPizza() {
 			};
 
 			updateTooltipData = function () {};
-
+			updatePrimaryColumn = function () {};
+			
 			updateRingColumn = function () {
 				data.sort(
 					(a, b) => cmp(sliceSet.indexOf(sliceValue(a)), sliceSet.indexOf(sliceValue(b))) || cmp(ringSet.indexOf(ringValue(a)), ringSet.indexOf(ringValue(b)))
@@ -492,6 +494,7 @@ function createPizza() {
 
 	chart.primaryColumn = function (value: string) {
 		primaryColumn = value;
+		if (typeof updatePrimaryColumn === "function") updatePrimaryColumn();
 		return chart;
 	};
 

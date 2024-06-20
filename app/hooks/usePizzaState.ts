@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface PizzaState {
+	primaryColumn: string;
 	ringKey: string;
 	ringSet: string[];
 	ringCounts: { [key: string]: { current: number; prev: number } };
@@ -10,6 +11,7 @@ export interface PizzaState {
 	tooltip: string[];
 	sliceCounts: { [key: string]: { current: number; prev: number } };
 	options: { value: string; label: string }[];
+	setPrimaryColumn: (primaryColumn: string) => void;
 	setRingKey: (ringKey: string) => void;
 	setRingSet: (ringSet: string[]) => void;
 	setRingCounts: (ringCounts: { [key: string]: number }) => void;
@@ -23,6 +25,7 @@ export interface PizzaState {
 export const usePizzaState = create<PizzaState>()(
 	persist(
 		(set, get) => ({
+			primaryColumn: "internalId",
 			ringKey: "",
 			ringSet: [],
 			ringCounts: {},
@@ -31,6 +34,7 @@ export const usePizzaState = create<PizzaState>()(
 			sliceCounts: {},
 			tooltip: [],
 			options: [],
+			setPrimaryColumn: (primaryColumn: string) => set({ primaryColumn }),
 			setRingKey: (ringKey: string) => set({ ringKey }),
 			setRingSet: (ringSet: string[]) => set({ ringSet }),
 			setRingCounts: (ringCounts: { [key: string]: number }) => {

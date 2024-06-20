@@ -6,6 +6,7 @@ import Script from "next/script";
 import HydrationBoundary from "./components/HydrationBoundry";
 import ToasterProvider from "./providers/ToastProivder";
 import TooltipSettingsModal from "./components/modal/TooltipSettingsModal";
+import TooltipComponent from "./components/ToolTipComponent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
 				<HydrationBoundary>
 					<ToasterProvider />
 					<TooltipSettingsModal />
+					<TooltipComponent />
 					{children}
 				</HydrationBoundary>
 			</body>

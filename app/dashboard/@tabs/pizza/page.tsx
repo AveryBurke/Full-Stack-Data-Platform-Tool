@@ -9,13 +9,13 @@ const page = () => {
 	const { data } = useQueryStore();
 	const ref = useRef<HTMLDivElement>(null);
 	const refCanvas = useRef<HTMLCanvasElement>(null);
-	const { ringKey, sliceKey, sliceSet, ringSet, tooltip } = usePizzaState();
+	const { primaryColumn, ringKey, sliceKey, sliceSet, ringSet, tooltip } = usePizzaState();
 	const pizzaRef = useRef(createPizza());
 	useChartUpdates(pizzaRef);
 	const [render, setRender] = useState(false);
 	useEffect(() => {
 		if (ref.current && !render && refCanvas.current) {
-			pizzaRef.current.primaryColumn("internalId");
+			pizzaRef.current.primaryColumn(primaryColumn);
 			pizzaRef.current.ratio(window.devicePixelRatio);
 			pizzaRef.current.margin({ top: 120, right: 220, bottom: 0, left: 220 });
 			pizzaRef.current.canvasWidth(refCanvas.current.width);
