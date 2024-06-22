@@ -9,7 +9,7 @@ interface NavbarProps {
 
 const Navbar:React.FC<NavbarProps> = ({icon, title, backgroundColor}) => {
 	return (
-		<nav className={"flex flex-grow items-center justify-between flex-wrap p-2 " + backgroundColor} >
+		<nav className={"flex items-center justify-between flex-wrap p-2 " + backgroundColor} >
 			<div className="flex items-center flex-shrink-0 text-white mr-6">
 				{icon && <span className="font-semibold text-xl tracking-tight">{icon}</span>}
 				<span className="font-semibold text-xl tracking-tight">{title}</span>

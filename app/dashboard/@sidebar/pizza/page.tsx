@@ -25,7 +25,7 @@ const page = () => {
 	const { filterKey, filterSet, setFilterKey, setFilterSet } = useFilterState();
 
 	return (
-		<ul className="flex flex-col flex-grow gap-6">
+		<ul className="flex flex-col h-[575px] inheret gap-6 overflow-y-scroll pb-4">
 			<li key="primary-column">
 				<SidebarComponentWrapper
 					title="primary column"
@@ -42,7 +42,7 @@ const page = () => {
 								"If no column is selected, data will be overwritten when the data set is updated",
 								"The values in this column must be unique for each row in the data set",
 							],
-							alignment: { x: "right", y: "center"}
+							alignment: { x: "right", y: "center" },
 						},
 					}}
 				/>
@@ -58,9 +58,8 @@ const page = () => {
 						tooltip: {
 							header: "Slice Column",
 							body: ["Group the data into slices, based on the values in this column."],
-							alignment: { x: "right", y: "center"}
+							alignment: { x: "right", y: "center" },
 						},
-						
 					}}>
 					<ControlPanel set={sliceSet} onChange={setSliceSet} counts={sliceCounts} />
 				</SidebarComponentWrapper>
@@ -76,6 +75,7 @@ const page = () => {
 						tooltip: {
 							header: "Ring Column",
 							body: ["Group the data into rings, based on the values in this column."],
+							alignment: { x: "right", y: "center" },
 						},
 					}}>
 					<ControlPanel set={ringSet} onChange={setRingSet} counts={ringCounts} />
@@ -92,7 +92,7 @@ const page = () => {
 						tooltip: {
 							header: "Filter Column",
 							body: ["Filter the data based on the values in this column."],
-							alignment: { x: "right", y: "top"}
+							alignment: { x: "right", y: "top" },
 						},
 					}}>
 					<CheckBoxControlePanel set={filterSet} onChange={setFilterSet} />

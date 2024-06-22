@@ -19,7 +19,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onClick
 
 	return (
 		<>
-			<div className="flex flex-row justify-end items-start w-full h-auto pb-2">
+			<div className="absolute top-3 right-3 z-50">
 				<PlayButton handlePlay={onClick} loading={isLoading} />
 			</div>
 			<Editor

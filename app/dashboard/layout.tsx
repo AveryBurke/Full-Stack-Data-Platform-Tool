@@ -13,7 +13,7 @@ interface LayoutProps {
 
 const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, input }) => {
 	return (
-		<div id="parent" className="min-h-screen max-h-screen flex flex-col overflow-auto">
+		<div id="parent" className="max-h-screen min-h-screen h-full flex flex-col overflow-auto">
 			<Navbar title="Data Viz" backgroundColor="bg-[#282a36]" />
 			<div id="resizable_container" className={`realtive flex flex-row flex-grow bg-[#282a36] py-px-1 overflow-clip border-t-2 border-opacity-50 border-[#abb2bf]`}>
 				<div
@@ -50,6 +50,7 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 					minSize={0}
 					initialSize={200}
 					maxSize={200}
+					// grow
 					growDirection="right"
 					bgColor={"bg-[#282a36]"}
 					additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">
