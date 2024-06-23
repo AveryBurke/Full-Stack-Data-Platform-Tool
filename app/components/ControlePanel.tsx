@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { DragDropContext, Draggable, DropResult } from "react-beautiful-dnd";
+import { DragDropContext, Draggable, DropResult, DraggingStyle, NotDraggingStyle } from "react-beautiful-dnd";
 import { StrictModeDroppable } from "./StrictModeDroppable";
 import CountUp from "react-countup";
 
@@ -28,25 +28,52 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ set, onChange, counts, scal
 	return (
 		<DragDropContext onDragEnd={hanldeDragEnd}>
 			<StrictModeDroppable droppableId="characters">
-				{(provided) => (
-					<ul className="characters rounded bg-[#abb2bf] bg-opacity-50 p-1 flex flex-col gap-[2px]" {...provided.droppableProps} ref={provided.innerRef}>
-						{set.map((member, index) => {
-							return (
-								<Draggable key={member} draggableId={member} index={index}>
-									{(provided) => (
-										<li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
-											<div className={"flex flex-row justify-between items-center p-1 bg-[#282a36] rounded text-sm text-slate-50 transition-all duration-200 hover:bg-opacity-75 active:bg-opacity-75 active:z-10 " + ((!counts[member] || !counts[member].current) && " text-slate-500")}>
-												{member}
-												{counts[member] && <CountUp className="text-xs text-slate-300" start={counts[member].prev || 0} end={counts[member].current || 0} />}
-											</div>
-										</li>
-									)}
-								</Draggable>
-							);
-						})}
-						{provided.placeholder}
-					</ul>
-				)}
+				{(provided) => {
+					
+					return (
+						<ul className="characters rounded bg-[#abb2bf] bg-opacity-50 p-1 flex flex-col gap-[2px]" {...provided.droppableProps} ref={provided.innerRef}>
+							{set.map((member, index) => {
+								return (
+									<Draggable key={member} draggableId={member} index={index}>
+										{(provided, snapshot) => {
+											if (snapshot.isDragging) {
+												const draggingStyle = provided.draggableProps.style as DraggingStyle;
+												const sidebarRects = document.getElementById("sidebar")?.getClientRects();
+												console.log(sidebarRects);
+												provided.draggableProps.style = {
+													...draggingStyle,
+													top: draggingStyle.top,
+												};
+											}
+											// window.getComputedStyle
+											// provided.draggableProps.style = {
+											// 	...provided.draggableProps.style,
+											// 	left: provided.draggableProps.style.offsetLeft,
+											// 	top: provided.draggableProps.style.offsetTop,
+											// };
+											return (
+												<li ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} >
+													<div
+														className={
+															"flex flex-row justify-between items-center p-1 bg-[#282a36] rounded text-sm text-slate-50 transition-all duration-200 hover:bg-opacity-75 active:bg-opacity-75 active:z-10 " +
+															((!counts[member] || !counts[member].current) && " text-slate-500"
+														)
+														}>
+														{member}
+														{counts[member] && (
+															<CountUp className="text-xs text-slate-300" start={counts[member].prev || 0} end={counts[member].current || 0} />
+														)}
+													</div>
+												</li>
+											);
+										}}
+									</Draggable>
+								);
+							})}
+							{provided.placeholder}
+						</ul>
+					);
+				}}
 			</StrictModeDroppable>
 		</DragDropContext>
 	);

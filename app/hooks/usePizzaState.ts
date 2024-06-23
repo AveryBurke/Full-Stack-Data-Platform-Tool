@@ -2,13 +2,16 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface PizzaState {
+	primaryColumn: string;
 	ringKey: string;
 	ringSet: string[];
 	ringCounts: { [key: string]: { current: number; prev: number } };
 	sliceKey: string;
 	sliceSet: string[];
+	tooltip: string[];
 	sliceCounts: { [key: string]: { current: number; prev: number } };
 	options: { value: string; label: string }[];
+	setPrimaryColumn: (primaryColumn: string) => void;
 	setRingKey: (ringKey: string) => void;
 	setRingSet: (ringSet: string[]) => void;
 	setRingCounts: (ringCounts: { [key: string]: number }) => void;
@@ -16,18 +19,22 @@ export interface PizzaState {
 	setSliceSet: (sliceSet: string[]) => void;
 	setSliceCounts: (sliceCounts: { [key: string]: number }) => void;
 	setOptions: (options: { value: string; label: string }[]) => void;
+	setTooltip: (tooltip: string[]) => void;
 }
 
 export const usePizzaState = create<PizzaState>()(
 	persist(
 		(set, get) => ({
+			primaryColumn: "internalId",
 			ringKey: "",
 			ringSet: [],
 			ringCounts: {},
 			sliceKey: "",
 			sliceSet: [],
 			sliceCounts: {},
+			tooltip: [],
 			options: [],
+			setPrimaryColumn: (primaryColumn: string) => set({ primaryColumn }),
 			setRingKey: (ringKey: string) => set({ ringKey }),
 			setRingSet: (ringSet: string[]) => set({ ringSet }),
 			setRingCounts: (ringCounts: { [key: string]: number }) => {
@@ -45,6 +52,8 @@ export const usePizzaState = create<PizzaState>()(
 				set({ sliceCounts: newSliceCounts });
 			},
 			setOptions: (options: { value: string; label: string }[]) => set({ options }),
+			setTooltip: (tooltip: string[]) => set({ tooltip }),
+			getTooltip: () => get().tooltip,
 		}),
 		{
 			name: "pizza-store",

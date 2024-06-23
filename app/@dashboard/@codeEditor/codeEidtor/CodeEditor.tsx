@@ -19,6 +19,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onClick
 
 	return (
 		<>
+			<div className="absolute top-3 right-3 z-50">
+				<PlayButton handlePlay={onClick} loading={isLoading} />
+			</div>
 			<Editor
 				value={code}
 				padding={10}
@@ -32,9 +35,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onClick
 					height: height || 350,
 				}}
 			/>
-			<div className=" absolute top-3 right-3">
-				<PlayButton handlePlay={onClick} loading={isLoading} />
-			</div>
+			
 		</>
 	);
 };
