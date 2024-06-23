@@ -37,11 +37,12 @@ const page = () => {
 						tooltip: {
 							header: "Primary Column",
 							body: [
-								"The column that will be used as the primary key for the data",
-								"This column will be used to track changes in data when the data set is updated",
-								"If no column is selected, data will be overwritten when the data set is updated",
-								"The values in this column must be unique for each row in the data set",
-							],
+								"Identify rows based on the values in this column.",
+								"Each row will be represented by a shape in the pizza chart.",
+								"When the data set is updated, the primary column will be used to identify which shapes have been added, removed, or updated.",
+								"If the primary column is not set the data will be overwritten on each update.",
+								"The values in the primary column must be unique."
+														],
 							alignment: { x: "right", y: "center" },
 						},
 					}}

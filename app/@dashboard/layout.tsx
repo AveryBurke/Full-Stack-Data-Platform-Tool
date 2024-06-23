@@ -50,7 +50,6 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 					minSize={0}
 					initialSize={200}
 					maxSize={200}
-					// grow
 					growDirection="right"
 					bgColor={"bg-[#282a36]"}
 					additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">

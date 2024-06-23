@@ -46,7 +46,8 @@ const Menu: React.FC<MenuProps> = ({ children, title }) => {
 			<div onClick={handleClick} className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4">{title}</div>
 			{open && <div ref={ref}
 					className={`
-						   min-w-[150px]
+						    min-w-[250px]
+							p-1
 							z-50
                             absolute 
                             rounded 
