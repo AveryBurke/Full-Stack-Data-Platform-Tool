@@ -6,25 +6,26 @@ import { set } from "date-fns";
 interface MenuProps {
 	children: ReactNode;
 	title: string;
-	close?: boolean;
 }
 
-const Menu: React.FC<MenuProps> = ({ children, title, close }) => {
+const Menu: React.FC<MenuProps> = ({ children, title }) => {
 	const [open, setOpen] = useState(false);
-	const [opacity, setOpacity] = useState<"0" | "100">("0");
+	const [visible, setVisible] = useState(false);
 
 	const openMenu = () => {
 		// start with the menu hidden
-		setOpacity("0");
+		setVisible(false);
 		// render the menu
 		setOpen(true);
-		// fade in the menu
-		setOpacity("100");
+		// fade in the menu after a short delay
+		setTimeout(() => {
+			setVisible(true);
+		}, 10);
 	};
 
 	const closeMenu = () => {
 		// fade out the menu
-		setOpacity("0");
+		setVisible(false)
 		// close the menu
 		setTimeout(() => {
 			setOpen(false);
@@ -43,8 +44,9 @@ const Menu: React.FC<MenuProps> = ({ children, title, close }) => {
 	return (
 		<>
 			<div onClick={handleClick} className="block mt-4 lg:inline-block lg:mt-0 text-teal-200 hover:text-white mr-4">{title}</div>
-			{open && !close && <div ref={ref}
+			{open && <div ref={ref}
 					className={`
+						   min-w-[150px]
 							z-50
                             absolute 
                             rounded 
@@ -55,7 +57,8 @@ const Menu: React.FC<MenuProps> = ({ children, title, close }) => {
                             overflow-hidden
                             text-sm
 							transition-opacity
-							opacity-${opacity}`
+							${visible ? "opacity-100" : "opacity-0"}
+							duration-250`
 							}>
 					<div onClick={closeMenu} className="flex flex-col flex-grow cursor-pointer text-sm">{children}</div></div>}
 		</>

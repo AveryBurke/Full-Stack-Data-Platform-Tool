@@ -6,10 +6,12 @@ import useTooltipSettingsModal from "@/app/hooks/useTooltipSettingsModal";
 import React from "react";
 
 const SettingsMenu = () => {
-    const tooltipSettingsModal = useTooltipSettingsModal();
+	const tooltipSettingsModal = useTooltipSettingsModal();
 	return (
 		<Menu title="Settings">
-			<MenuItem label="tooltip" callback={() => tooltipSettingsModal.onOpen()} />
+			<MenuItem label="Tooltip" callback={() => tooltipSettingsModal.onOpen()} />
+			<MenuItem label="Theme" callback={() => console.log("clicked theme")} />
+
 		</Menu>
 	);
 };
