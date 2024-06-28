@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQueryStore } from "@/app/hooks/useQueryStorage";
 import { rawQuery } from "@/app/actions/rawQuery";
+import { mergeQueryResults } from "@/app/actions/mergeQueryResults";
 import Sheet from "./Sheet";
 import Loader from "@/app/components/Loader";
 import { toast } from "react-hot-toast";
@@ -37,7 +38,7 @@ const SheetWrapper = () => {
 				setData(res);
 				const options = Object.keys(res[0]).map((key) => ({ value: key, label: key }));
 				setOptions(options);
-
+				formatAndSetSheetData([]);
 				formatAndSetSheetData(res);
 			} catch (error) {
 				if (error instanceof Error) {

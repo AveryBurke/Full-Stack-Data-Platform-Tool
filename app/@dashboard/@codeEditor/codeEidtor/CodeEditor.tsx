@@ -2,6 +2,8 @@
 import Editor from "react-simple-code-editor";
 import Prisma from "prismjs";
 import PlayButton from "./PlayButton";
+import MergeButton from "./MergeButton";
+import { usePizzaState } from "@/app/hooks/usePizzaState";
 
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-sql";
@@ -9,18 +11,18 @@ import "prismjs/themes/prism.css";
 
 interface CodeEditorProps {
 	onChange: (code: string) => void;
-	onClick: () => void;
+	onSubmit: () => void;
 	isLoading?: boolean;
 	code: string;
 	height?: number;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onClick, isLoading}) => {
-
+const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onSubmit, isLoading }) => {
+	const { primaryColumn } = usePizzaState();
 	return (
 		<>
 			<div className="absolute top-3 right-3 z-50">
-				<PlayButton handlePlay={onClick} loading={isLoading} />
+				{primaryColumn === "internalId" ? <PlayButton handlePlay={onSubmit} loading={isLoading} /> : <MergeButton hanldeClick={onSubmit} loading={isLoading} />}
 			</div>
 			<Editor
 				value={code}
@@ -35,7 +37,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onClick
 					height: height || 350,
 				}}
 			/>
-			
 		</>
 	);
 };

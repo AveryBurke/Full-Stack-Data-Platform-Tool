@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
 import { useQueryStore } from "@/app/hooks/useQueryStorage";
+import { mergeQueryResults } from "@/app/actions/mergeQueryResults";
 import CodeEditor from "./codeEidtor/CodeEditor";
 import { format } from "sql-formatter";
 
@@ -11,13 +12,26 @@ const Page = () => {
 	const [componentMaxHeight, setComponentMaxHeight] = useState(0);
 
 	const handleQuerySubmit = () => {
+	
 		if (code !== queryStore.query) {
+			console.log("submitting query");
+			console.log("code ", code)
 			// the sheet component will only fetch new data if the current data is empty
-			queryStore.setData([]);
+			// queryStore.setData([]); // NOTE: this is causing problems mergeing the data in the pizza chart.
 			const unformat =  code.replace(/\n/g, " ").replace(/ +/g, ' ').trim();
 			queryStore.setQuery(unformat);
+		} else {
+			console.log("query is the same");
 		}
 	};
+
+	// const hangleMerge = () => {
+	// 	if (code !== queryStore.query) {
+	// 		const merged = mergeQueryResults();
+	// 		const unformat =  code.replace(/\n/g, " ").replace(/ +/g, ' ').trim();
+	// 		queryStore.setQuery(unformat);
+	// 	}
+	// };
 
 	useEffect(() => {
 		setCode(format(queryStore.query, { language: "sql" }));
@@ -40,7 +54,7 @@ const Page = () => {
 				code={code}
 				onChange={(code: string) => setCode(code)}
 				isLoading={queryStore.isLoading}
-				onClick={handleQuerySubmit}
+				onSubmit={handleQuerySubmit}
 			/>
 		</div>
 	);

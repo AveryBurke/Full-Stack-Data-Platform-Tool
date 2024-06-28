@@ -44,6 +44,7 @@ function createPizza() {
 			// accessors
 			let ringValue = (d: any): string => d[ringColumn],
 				sliceValue = (d: any) => d[sliceColumn],
+				primaryColumnValue = (d: any) => d[primaryColumn],
 				// metrics
 				ringCount = Object.fromEntries(ringSet.map((ring) => [ring, data.filter((d) => ringValue(d) === ring).length])),
 				sliceCount = Object.fromEntries(sliceSet.map((slice) => [slice, data.filter((d) => sliceValue(d) === slice).length])),
@@ -88,7 +89,7 @@ function createPizza() {
 
 			const grouped = rollup(
 				data,
-				(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
+				(D) => D.map<string>((d) => primaryColumnValue(d)).sort((a, b) => a.localeCompare(b)),
 				(d) => sliceValue(d) || "undefined",
 				(d) => ringValue(d) || "undefined"
 			);
@@ -140,7 +141,7 @@ function createPizza() {
 				if (!active) return;
 				if (tooltipData.length === 0) return;
 				// get the data for the currently selected shape
-				const datum = data.find((d) => d[primaryColumn] === active);
+				const datum = data.find((d) => primaryColumnValue(d) === active);
 				// the tooltip div is a child of the main div
 				// so we have to use the pageX and pageY to position it.
 				// This violates my rule of keeping react and d3 separate.
@@ -226,7 +227,6 @@ function createPizza() {
 							(d) => (sliceValue(d) ? sliceValue(d) === section.slice : true) && (ringValue(d) ? ringValue(d) === section.ring : true)
 						).length;
 					}
-
 					await shapeWorker.addSections(
 						input[input.length - 1].sort(
 							(a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice)) || cmp(ringSet.indexOf(a.ring), ringSet.indexOf(b.ring))
@@ -236,13 +236,13 @@ function createPizza() {
 
 					const grouped = rollup(
 						data,
-						(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
+						(D) => D.map<string>((d) => primaryColumnValue(d)).sort((a, b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
 
 					shapeWorker.updateShapeData(grouped);
-					// shapeWorker.updateShapeData(data.map((d) => d[primaryColumn]));
+					// shapeWorker.updateShapeData(data.map((d) => primaryColumnValue(d)));
 				};
 				// When the data changes the slices and rings need to be updated.
 				// Many of the calculations are redundant with those in the updateSliceSet and updateRingSet functions.
@@ -274,7 +274,10 @@ function createPizza() {
 			};
 
 			updateTooltipData = function () {};
-			updatePrimaryColumn = function () {};
+			updatePrimaryColumn = function () {
+				primaryColumnValue = (d:any) => d[primaryColumn];
+				updateData();
+			};
 			
 			updateRingColumn = function () {
 				data.sort(
@@ -344,7 +347,7 @@ function createPizza() {
 						.sort((a, b) => cmp(sliceSet.indexOf(a.slice), sliceSet.indexOf(b.slice) || cmp(ringSet.indexOf(b.ring), ringSet.indexOf(a.ring))));
 					const grouped = rollup(
 						movedRings.length > 0 ? data.filter((d) => movedRings.includes(ringValue(d))) : data,
-						(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
+						(D) => D.map<string>((d) => primaryColumnValue(d)).sort((a, b) => a.localeCompare(b)),
 						(d) => sliceValue(d) || "undefined",
 						(d) => ringValue(d) || "undefined"
 					);
@@ -446,7 +449,7 @@ function createPizza() {
 						await shapeWorker.addSections(input[input.length - 1], Comlink.proxy(arc<Section>()));
 						const grouped = rollup(
 							data,
-							(D) => D.map<string>((d) => d[primaryColumn]).sort((a, b) => a.localeCompare(b)),
+							(D) => D.map<string>((d) => primaryColumnValue(d)).sort((a, b) => a.localeCompare(b)),
 							(d) => sliceValue(d) || "undefined",
 							(d) => ringValue(d) || "undefined"
 						);
