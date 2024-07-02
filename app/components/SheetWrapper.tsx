@@ -76,6 +76,7 @@ const SheetWrapper = () => {
 	// state data looks like [{name: "John", age: 20}, {name: "Jane", age: 30}]
 	// spreadsheet data looks like [["name", "age"], ["John", 20], ["Jane", 30]]
 	const handleDataChange = (data: any[]) => {
+		// setSheetData([])
 		const values: any[] = data.map((row) => Object.values(row).slice(1));
 		const keys: string[] = values[0];
 		const objs: any[] = [];

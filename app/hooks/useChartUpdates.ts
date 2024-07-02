@@ -8,12 +8,18 @@ import deepEqual from "deep-equal";
 // make the ref chart and the sidebar reactive to changes in the data, filters, ring and slice keys
 export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) => {
 	const { data } = useQueryStore();
-	const { ringKey, ringSet, sliceKey, sliceSet, tooltip, setRingSet, setSliceSet, setOptions, setSliceCounts, setRingCounts, setTooltip } = usePizzaState();
+	const { ringKey, ringSet, sliceKey, sliceSet, tooltip, primaryColumn, setRingSet, setSliceSet, setOptions, setSliceCounts, setRingCounts} = usePizzaState();
 	const { filterKey, filterSet, setFilterSet } = useFilterState();
 	const numberOfSliceUpdate = useRef(0);
 	const numberOfRingUpdate = useRef(0);
 	const numberOfFilterUpdate = useRef(0);
 	const refData = useRef<any[]>([]);
+
+	// update the primary column in the pizza chart, when the primary column in state changes
+	useEffect(() => {
+		if (!ref.current) return;
+		ref.current.primaryColumn(primaryColumn);
+	}, [primaryColumn, ref.current]);
 
 	// update the filter set in state, when the filter key changes
 	useEffect(() => {
@@ -83,6 +89,7 @@ export const useChartUpdates = (ref: RefObject<ReturnType<typeof createPizza>>) 
 		setOptions(options.map((key) => ({ value: key, label: key })));
 		const filters = filterSet.filter((f) => !f.filtered).map((f) => f.value);
 		const filteredData = data.filter((d) => filters.includes(d[filterKey]));
+		
 		/// WARNING: this might be very expensive with long data sets
 		if (deepEqual(filteredData, refData.current)) return;
 		refData.current = filteredData;

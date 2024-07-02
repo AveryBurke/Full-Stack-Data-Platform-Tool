@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface QueryStore {
 	query: string;
+	primaryKey: string;
 	isLoading: boolean;
 	onLoading: () => void;
 	onFinish: () => void;
@@ -15,12 +16,13 @@ export const useQueryStore = create<QueryStore>()(
 	persist(
 		(set, get) => ({
 			isLoading: false,
+			primaryKey: "internalId", // default primary key is "internalId
 			data: [],
 			query: "",
 			setData: (data: any[]) => {
 				for (let i = 0; i < data.length; i++) {
 					// add internalId to each data item
-					data[i]["internalId"] = crypto.randomUUID();
+					data[i][get().primaryKey] = crypto.randomUUID();
 				};
 				set({ data })
 			},
