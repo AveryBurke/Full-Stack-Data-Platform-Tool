@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This project is in progress and not currently deployed. It's a data management and visualization tool for the [AACT database of clinical trials](https://aact.ctti-clinicaltrials.org/) incorporating and expanding ideas from my time at [TrialTrace](https://demo.trialtrace.com/).
 
-## Getting Started
+## Stack
+- [Next.js](https://nextjs.org/)
+- React
+- Typescript
+- d3.js
+- jest
+- playwrite
+- Tailwind CSS
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Queries to the AACT database are rendered as an interactive spreadsheet and as data visualizations
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+![](/public/Fetch.gif)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Interactive Data Visualisations
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+![](/public/ResizeAndSelect.gif)
 
-## Learn More
+### Realtime data updates
+![](/public/UpdateData.gif)
 
-To learn more about Next.js, take a look at the following resources:
+### Ai-enhanced query translation
+For users who are not comfortable with SQL, the app uses chatGPT's function calling API to translate natural language requests into queries against the AACT database.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## Roadmap
+- Add user accounts and project folders
+- Deploy to Vercel
+- Add more visualizations
+- Add multi-player editing for visualizations and spreadsheets
+- Improve AI assistant and add drug discovery.OWL database
+- Improve general response time

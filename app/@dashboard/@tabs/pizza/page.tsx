@@ -9,6 +9,7 @@ import { toast } from "react-hot-toast";
 import { rawQuery } from "@/app/actions/rawQuery";
 
 const page = () => {
+
 	const { data, query, setData, onFinish, onLoading } = useQueryStore();
 	const ref = useRef<HTMLDivElement>(null);
 	const refCanvas = useRef<HTMLCanvasElement>(null);
