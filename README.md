@@ -13,14 +13,14 @@ This project is in progress and not currently deployed. It's a data management a
 
 ### Queries to the AACT database are rendered as an interactive spreadsheet and as data visualizations
 
-[fetching data from AACT](/public/Fetch.gif)
+![](/public/Fetch.gif)
 
 ### Interactive Data Visualisations
 
-[resize and select columns](/public/ResizeAndSelect.gif)
+![](/public/ResizeAndSelect.gif)
 
 ### Realtime data updates
-[run a query and watch your charts update](/public/UpdateData.gif)
+![](/public/UpdateData.gif)
 
 ### Ai-enhanced query translation
 For users who are not comfortable with SQL, the app uses chatGPT's function calling API to translate natural language requests into queries against the AACT database.
