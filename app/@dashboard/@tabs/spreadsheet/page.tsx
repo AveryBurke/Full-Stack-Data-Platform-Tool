@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQueryStore } from "@/app/hooks/useQueryStorage";
 import { rawQuery } from "@/app/actions/rawQuery";
-import { mergeQueryResults } from "@/app/actions/mergeQueryResults";
 import Sheet from "./Sheet";
 import Loader from "@/app/components/Loader";
 import { toast } from "react-hot-toast";

@@ -15,51 +15,23 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 	return (
 		<div id="parent" className="max-h-screen min-h-screen h-full flex flex-col overflow-auto">
 			<Navbar title="Data Viz" backgroundColor="bg-[#282a36]" />
-			<div id="resizable_container" className={`realtive flex flex-row flex-grow bg-[#282a36] py-px-1 overflow-clip border-t-2 border-opacity-50 border-[#abb2bf]`}>
-				<div
-					id="tooltip"
-					style={{ visibility: "hidden" }}
-					className="
-					absolute 
-					block 
-					max-w-full 
-					max-h-full 
-					z-20 
-					shadow-lg
-					bg-[#333] 
-					text-white 
-					font-semibold 
-					px-3 
-					py-[6px] 
-					text-[13px] 
-					mx-auto 
-					w-max 
-					-top-10 
-					rounded 
-					before:w-4 
-					before:h-4 
-					before:rotate-45 
-					before:bg-[#333] 
-					before:absolute 
-					before:z-[-1] 
-					before:-bottom-1 
-					before:left-0  
-					before:right-0 
-					before:mx-auto"></div>
+			<div id="resizable_container" className={`realtive flex flex-row flex-grow bg-[#282a36] overflow-clip border-t-2 border-opacity-50 border-[#abb2bf]`}>
 				<ResizablePane
 					minSize={0}
 					initialSize={200}
 					maxSize={200}
+					collapseWidth={150}
 					growDirection="right"
 					bgColor={"bg-[#282a36]"}
 					additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">
 					{sidebar}
 				</ResizablePane>
 				<div className={`flex flex-col flex-grow`}>
-					<ResizablePane minSize={0} initialSize={200} maxSize={1000} vertical bgColor={"bg-[#282a36]"}>
+					<ResizablePane minSize={0} initialSize={200} maxSize={1000} vertical bgColor={"bg-[#282a36]"} collapseHeight={150} collapseWidth={200}>
 						{input}
 					</ResizablePane>
 					<ResizablePane
+						collapseWidth={200}
 						minSize={0}
 						initialSize={200}
 						grow
