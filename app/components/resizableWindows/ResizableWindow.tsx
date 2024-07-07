@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, use } from "react";
 import { createPortal } from "react-dom";
 import ResizableHandle from "./ResizableHandle";
 import { set } from "date-fns";
+import exp from "constants";
 
 interface ResizablePaneProps {
 	minSize: number;
@@ -14,8 +15,8 @@ interface ResizablePaneProps {
 	growDirection?: "left" | "right" | "top" | "bottom";
 	children?: React.ReactNode;
 	additionalStyles?: string;
-	collapseWidth?: number;
-	collapseHeight?: number;
+	collapseThreshold?: number;
+	expansionThreshold?: number;
 }
 
 /**
@@ -32,21 +33,27 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 	growDirection,
 	children,
 	additionalStyles,
-	collapseHeight,
-	collapseWidth,
+	collapseThreshold = -Infinity,
+	expansionThreshold = Infinity,
 }) => {
 	const [size, setSize] = useState(initialSize);
-	const [antiDimensionSz, setAntiDimensionSz] = useState<"auto" | 0>("auto");
 	const [collapsed, setCollapsed] = useState(false);
+	const [expanded, setExpanded] = useState(false);
 	const [isResizing, setIsResizing] = useState(false);
-	const [renderChildren, setRenderChildren] = useState(true);
 	const [rect, setRect] = useState<DOMRect | null>(null);
+	const [cursor, setCursor] = useState<Cursor>("cursor-col-resize");
 
 	const ref = useRef<HTMLDivElement>(null);
 
 	const dimension = isVertical ? "height" : "width";
-	const antiDimension = isVertical ? "width" : "height";
 
+	useEffect(() => {
+		if (isVertical) setCursor("cursor-row-resize");
+	}, []);
+
+	useEffect(() => {
+		console.log(cursor);
+	}, [cursor]);
 
 	useEffect(() => {
 		const handleMouseMove = (e: MouseEvent) => {
@@ -58,22 +65,54 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 
 			newSize = Math.max(minSize, Math.min(maxSize, newSize));
 			setSize(newSize);
-			setAntiDimensionSz("auto");
-			setRenderChildren(true);
+			setCollapsed(false);
+
+			// cursor logic
+			if (isVertical) {
+				if (newSize < expansionThreshold || newSize > collapseThreshold) setCursor("cursor-row-resize");
+				if (newSize < collapseThreshold) setCursor("cursor-s-resize");
+				if (newSize > expansionThreshold) setCursor("cursor-n-resize");
+			} else {
+				if (newSize < expansionThreshold || newSize > collapseThreshold) setCursor("cursor-col-resize");
+				if (newSize < collapseThreshold && growDirection === "left") setCursor("cursor-w-resize");
+				if (newSize > expansionThreshold && growDirection === "left") setCursor("cursor-e-resize");
+				if (newSize < collapseThreshold && growDirection === "right") setCursor("cursor-e-resize");
+				if (newSize > expansionThreshold && growDirection === "right") setCursor("cursor-w-resize");
+			}
+
+			// vertical cursor logic
+
+			// fullSize === true triggers the pane to expand to the full size using the 100% css value
+			// this means we don't have the current size in pixels, so we need to set state to the current size
+			// before the drag event or else the pane will jump to the pre-expanded size
+			if (isVertical) {
+				if (expanded && rect) {
+					setExpanded(false);
+					setSize(rect.height);
+				}
+			} else if (expanded && rect) {
+				setExpanded(false);
+				setSize(rect.width);
+			}
 		};
 
 		const handleMouseUp = (e: MouseEvent) => {
 			e.preventDefault();
+			
 
-			if (isVertical && collapseHeight && size < collapseHeight) setSize(0);
-			if (!isVertical && collapseWidth && size < collapseWidth) setSize(0);
-
-			if (isVertical && collapseWidth && rect && rect.width < collapseWidth) setAntiDimensionSz(0);
-			if (!isVertical && collapseHeight && rect && rect.height < collapseHeight) setAntiDimensionSz(0);
+			if (size < expansionThreshold || size > collapseThreshold) {
+				setExpanded(false);
+				setCollapsed(false);
+			}
+			if (size < collapseThreshold) {
+				setSize(0);
+				setCollapsed(true);
+			}
+			if (size > expansionThreshold) {
+				setExpanded(true);
+			}
 
 			setIsResizing(false);
-			setRenderChildren(!collapsed);
-
 		};
 
 		document.addEventListener("mousemove", handleMouseMove);
@@ -82,7 +121,7 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 			document.removeEventListener("mousemove", handleMouseMove);
 			document.removeEventListener("mouseup", handleMouseUp);
 		};
-	}, [size, isResizing, minSize, maxSize, isVertical, rect, collapseHeight, collapseWidth, growDirection]);
+	}, [size, isResizing, minSize, maxSize, isVertical, rect, collapseThreshold, expansionThreshold, growDirection]);
 
 	// ResizeObserver is used to update the hanlde poisition width and height of the resizable pane
 	// these need to be passed as props, because the hanlde is rendered as a portal
@@ -93,7 +132,6 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 		const resizeObserver = new ResizeObserver((entries) => {
 			for (let entry of entries) {
 				const clientRect = entry.target.getBoundingClientRect();
-				setCollapsed(clientRect.height < collapseHeight! || clientRect.width < collapseWidth!);
 				setRect(clientRect);
 			}
 		});
@@ -105,16 +143,22 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 		};
 	}, []);
 
-
 	const handleMouseDown = (e: React.MouseEvent) => {
 		e.preventDefault();
 		setIsResizing(true);
 	};
 
-	const clName = `@container relative ${bgColor} ${grow ? "grow" : ""} shrink-0 ${renderChildren ? "" : "transition-all duration-75"} ` + additionalStyles;
+	const clName =
+		`@container 
+				relative 
+				${bgColor} 
+				${grow ? "grow" : ""} 
+				shrink-0 
+				${collapsed || expanded ? " transition-all duration-75 " : ""} 
+				` + additionalStyles;
 
 	return (
-		<div ref={ref} className={clName} style={{ [dimension]: `${size}px`, [antiDimension]: antiDimensionSz }}>
+		<div draggable={true} ref={ref} className={clName} style={{ [dimension]: expanded ? "calc(100% - 3px)" : `${size}px` }}>
 			{!grow &&
 				createPortal(
 					<ResizableHandle
@@ -122,12 +166,12 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 						isVertical={isVertical}
 						handleMouseDown={(e: React.MouseEvent) => handleMouseDown(e)}
 						direction={growDirection || "right"}
-						collapsed={collapsed}
+						cursor={cursor}
 						rect={rect}
 					/>,
 					document.body
 				)}
-			{renderChildren && children}
+			{!collapsed && rect && (isVertical ? rect.width > 30 : rect.height > 30) && children}
 		</div>
 	);
 };

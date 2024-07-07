@@ -20,31 +20,34 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 					minSize={0}
 					initialSize={200}
 					maxSize={200}
-					collapseWidth={150}
+					collapseThreshold={150}
 					growDirection="right"
 					bgColor={"bg-[#282a36]"}
 					additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">
 					{sidebar}
 				</ResizablePane>
-				<div className={`flex flex-col flex-grow`}>
-					<ResizablePane minSize={0} initialSize={200} maxSize={1000} vertical bgColor={"bg-[#282a36]"} collapseHeight={150} collapseWidth={200}>
+				<div className={`flex flex-col flex-grow `}>
+					<ResizablePane minSize={0} initialSize={200} maxSize={1000} vertical bgColor={"bg-[#282a36]"} collapseThreshold={175} expansionThreshold={400}>
 						{input}
 					</ResizablePane>
 					<ResizablePane
-						collapseWidth={200}
+						// collapseThreshold={200}
 						minSize={0}
 						initialSize={200}
 						grow
 						vertical
 						bgColor={"bg-[#282a36]"}
-						additionalStyles="z-10 border-t-2 border-opacity-50 border-[#abb2bf]">
+						// add h-0 to allow the editor to controle the height
+						additionalStyles="z-10 border-t-2 border-opacity-50 border-[#abb2bf] h-0">
 						{codeEditor}
 					</ResizablePane>
 				</div>
 				<ResizablePane
 					minSize={150}
 					initialSize={800}
-					maxSize={1280}
+					maxSize={Infinity}
+					collapseThreshold={400}
+					expansionThreshold={1000}
 					growDirection="left"
 					bgColor={"bg-[#282a36]"}
 					additionalStyles="z-0 border-l-2 border-opacity-50 border-[#abb2bf]">

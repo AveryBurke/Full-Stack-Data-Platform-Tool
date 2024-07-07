@@ -86,6 +86,17 @@ type TimeQueueTask = QueueTask<"time", number>;
 type EaseQueueTask = QueueTask<"ease", Easing>;
 
 declare global {
+	type Cursor =
+		| "cursor-col-resize"
+		| "cursor-row-resize"
+		| "cursor-n-resize"
+		| "cursor-s-resize"
+		| "cursor-e-resize"
+		| "cursor-w-resize"
+		| "cursor-ne-resize"
+		| "cursor-nw-resize"
+		| "cursor-se-resize"
+		| "cursor-sw-resize";
 	type Easing = keyof typeof d3EasingFunctions;
 	type Section = {
 		id: string;
@@ -133,7 +144,7 @@ declare global {
 			/**
 			 * each string in the array is a new line in the tooltip
 			 */
-			body?: string[];	
+			body?: string[];
 			/**
 			 * the alignment of the tooltip relative to the element that triggered it
 			 */
