@@ -1,66 +1,77 @@
 "use client";
-import React, { useRef, useEffect } from "react";
-import useTooltip from "@/app/hooks/useTooltip";
+import React, { useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import Tooltip from "./ToolTip";
+import usePortal from "../hooks/usePortal";
 import { IconType } from "react-icons";
-import {CircleLoader} from "react-spinners";
+import { CircleLoader } from "react-spinners";
 
 interface ActionButtonProps {
 	handlClick: () => void;
-    Icon: IconType;
-    LoadingIcon: typeof CircleLoader;
-    color:string;
+	Icon: IconType;
+	LoadingIcon: typeof CircleLoader;
+	color: string;
 	loading?: boolean;
-    tooltip?: {
-        header: string;
-        body: string[];
-        alignment: { x: "left" | "right", y: "top" | "bottom" }
-    }
+	tooltip?: {
+		header: string;
+		body: string[];
+		alignment: { x: "left" | "right"; y: "top" | "bottom" };
+	};
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({ handlClick, loading, Icon, LoadingIcon, color, tooltip }) => {
 	const ref = useRef<HTMLDivElement>(null);
-	const { setCoords, setHeader, setBody, onOpen, onClose, setAlignment, isOpen } = useTooltip(); 
-	const handleMouseEnter = (e:MouseEvent) => {
-		if (!ref.current) return;
-		if (isOpen) return;
-        if (!tooltip) return;
-		const bb = ref.current.getBoundingClientRect();
-        const { header, body, alignment} = tooltip;
-		setHeader(header);
-		setBody(body);
-		setAlignment(alignment);
-		setCoords({ x:bb.x + bb.width, y: bb.y});
 
-		onOpen();
-	}
+	const [tooltipOpen, setTooltipOpen] = useState(false);
+	const [tooltipIsVisible, setTooltipVisable] = useState(false);
+	const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
 
-	const handleMouseLeave = () => {
-		if (!isOpen) return;
-		onClose();
-	}
+	const Portal = usePortal(document.getElementById("portal-root")!);
 
-	useEffect(() => {
-		if (ref.current) {
-			ref.current.addEventListener("mouseenter", handleMouseEnter);
-			ref.current.addEventListener("mouseleave", handleMouseLeave);
-		}
-		return () => {
-			if (ref.current) {
-				ref.current.removeEventListener("mouseenter", handleMouseEnter);
-				ref.current.removeEventListener("mouseleave", handleMouseLeave);
-			}
-		}
-	}, [ref.current, handleMouseEnter, handleMouseLeave]);
+	const TT = (
+		<div className={"transition-opacity duration-200 " + (tooltipIsVisible ? "opacity-100" : "opacity-0")}>
+			<Tooltip coords={tooltipCoords} alignment={tooltip?.alignment || { x: "right", y: "center" }}>
+				{tooltip?.header && <h3 className="font-bold text-center">{tooltip.header}</h3>}
+				{tooltip?.body?.length! > 0 && <hr className="my-2" />}
+				{tooltip?.body?.map((line, index) => (
+					<span key={index} className="text-sm text-slate-600">
+						{line}
+					</span>
+				))}
+			</Tooltip>
+		</div>
+	);
+
+	const handleMouseEnter = useDebouncedCallback((e: React.MouseEvent) => {
+		if (tooltipOpen) return;
+		const bb = (e.target as HTMLElement).getBoundingClientRect();
+		if (bb.width === 0 || bb.height === 0) return;
+		setTooltipCoords({ x: bb.x + bb.width, y: bb.y });
+		// once the tool tip is open fade it in
+		setTooltipOpen(true);
+		setTimeout(() => {
+			setTooltipVisable(true);
+		}, 10);
+	}, 200);
+
+	const handleMouseLeave = useDebouncedCallback(() => {
+		setTooltipVisable(false);
+		setTimeout(() => {
+			setTooltipOpen(false);
+		}, 200);
+	}, 200);
 
 	return (
 		<>
+			{tooltipOpen &&  <Portal>{TT}</Portal>}
 			{!loading && (
 				<div
+					onMouseEnter={handleMouseEnter}
+					onMouseLeave={handleMouseLeave}
 					data-testid="play-button"
 					onClick={handlClick}
 					className="relative hover:opacity-80 cursor-pointer transition"
-					ref={ref}
-					>
+					ref={ref}>
 					{!loading && <Icon size={25} color={color} />}
 				</div>
 			)}

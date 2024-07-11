@@ -1,9 +1,8 @@
 "use client";
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, use } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import ResizableHandle from "./ResizableHandle";
-import { set } from "date-fns";
-import exp from "constants";
+
 
 interface ResizablePaneProps {
 	minSize: number;
@@ -51,9 +50,7 @@ const ResizablePane: React.FC<ResizablePaneProps> = ({
 		if (isVertical) setCursor("cursor-row-resize");
 	}, []);
 
-	useEffect(() => {
-		console.log(cursor);
-	}, [cursor]);
+
 
 	useEffect(() => {
 		const handleMouseMove = (e: MouseEvent) => {

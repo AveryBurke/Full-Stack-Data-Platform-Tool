@@ -69,7 +69,7 @@ const Sheet: React.FC<SheetProps> = ({ data, onDataChange }) => {
 		};
 	}, [data]);
 	return (
-		<div className="w-full h-full p-2 flex flex-col justify-center content-center">
+		<div className="w-full h-full p-3 flex flex-col content-center">
 			<input
 				type="text"
 				ref={tableNameRef}
@@ -80,14 +80,7 @@ const Sheet: React.FC<SheetProps> = ({ data, onDataChange }) => {
 			<div className="p-2">
 				<div ref={ref} className="spreadsheet"></div>
 			</div>
-			<div>
-				<button onClick={handleDownload} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
-					<svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-						<path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-					</svg>
-					<span>Download</span>
-				</button>
-			</div>
+
 		</div>
 	);
 };

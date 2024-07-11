@@ -23,7 +23,7 @@ const Sheet: React.FC<SheetProps> = ({ data, onDataChange }) => {
 	useEffect(() => {
 		if (ref.current) {
 			const table = new Tabulator(ref.current, {
-				height: "550px",
+				height: "full",
 
 				spreadsheet: true,
 				// spreadsheetRows: 50,
@@ -76,17 +76,8 @@ const Sheet: React.FC<SheetProps> = ({ data, onDataChange }) => {
 				placeholder="Table Name"
 				className=" w-40 h-8 py-3 px-4 block border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
 			/>
-
 			<div className="p-2">
 				<div ref={ref} className="spreadsheet"></div>
-			</div>
-			<div>
-				<button onClick={handleDownload} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
-					<svg className="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-						<path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z" />
-					</svg>
-					<span>Download</span>
-				</button>
 			</div>
 		</div>
 	);

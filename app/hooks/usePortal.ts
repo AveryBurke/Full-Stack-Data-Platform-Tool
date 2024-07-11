@@ -9,6 +9,7 @@ const usePortal = (el: HTMLElement) => {
 
 	const createPortal = useCallback(
 		(el: HTMLElement) => {
+			if (!el) return portal;
 			const Portal = ({children}:{children: ReactNode}) => ReactDOM.createPortal(children, el)
 			const remove = () => {
 				el.replaceChildren();

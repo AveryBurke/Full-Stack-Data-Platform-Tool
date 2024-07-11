@@ -1,32 +1,36 @@
 "use client";
-import { create } from "zustand";
+import { useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import usePortal from "./usePortal";
 
-interface TooltipSettingsModalStore {
-	coords: { x: number; y: number };
-	header: string;
-	body: string[];
-	isOpen?: boolean;
-	alignment?: { x: "center" | "left" | "right"; y: "center" | "top" | "bottom" };
-	setCoords: (coords: { x: number; y: number }) => void;
-	setHeader: (header: string) => void;
-	setBody: (body: string[]) => void;
-	setAlignment: (alignment: { x: "center" | "left" | "right"; y: "center" | "top" | "bottom" }) => void;
-	onOpen: () => void;
-	onClose: () => void;
-}
+// Manages the tooltip state
+const useTooltip = () => {
+	const [tooltipOpen, setTooltipOpen] = useState(false);
+	const [tooltipIsVisible, setTooltipVisable] = useState(false);
+	const [tooltipCoords, setTooltipCoords] = useState({ x: 0, y: 0 });
 
-const useTooltip = create<TooltipSettingsModalStore>((set) => ({
-	coords: { x: 0, y: 0 },
-	alignment: { x: "center", y: "center" },
-	header: "",
-	body: [],
-	isOpen: false,
-	setCoords: (coords: { x: number; y: number }) => set({ coords }),
-	setHeader: (header: string) => set({ header }),
-	setBody: (body: string[]) => set({ body }),
-	setAlignment: (alignment: { x: "center" | "left" | "right"; y: "center" | "top" | "bottom" }) => set({ alignment }),
-	onOpen: () => set({ isOpen: true }),
-	onClose: () => set({ isOpen: false }),
-}));
+	const Portal = usePortal(document.getElementById("portal-root")!);
+
+	const handleMouseEnter = useDebouncedCallback((e: React.MouseEvent) => {
+		if (tooltipOpen) return;
+		const bb = (e.target as HTMLElement).getBoundingClientRect();
+		if (bb.width === 0 || bb.height === 0) return;
+		setTooltipCoords({ x: bb.x + bb.width, y: bb.y });
+		// once the tool tip is open fade it in
+		setTooltipOpen(true);
+		setTimeout(() => {
+			setTooltipVisable(true);
+		}, 10);
+	}, 200);
+
+	const handleMouseLeave = useDebouncedCallback(() => {
+		setTooltipVisable(false);
+		setTimeout(() => {
+			setTooltipOpen(false);
+		}, 200);
+	}, 200);
+
+	return { tooltipOpen, tooltipIsVisible, tooltipCoords, Portal, handleMouseEnter, handleMouseLeave };
+};
 
 export default useTooltip;

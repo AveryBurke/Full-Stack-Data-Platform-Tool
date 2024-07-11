@@ -4,6 +4,7 @@ import Prisma from "prismjs";
 import PlayButton from "./PlayButton";
 import MergeButton from "./MergeButton";
 import { usePizzaState } from "@/app/hooks/usePizzaState";
+import { useEffect, useRef } from "react";
 
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-sql";
@@ -21,7 +22,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ code, height, onChange, onSubmi
 	const { primaryColumn } = usePizzaState();
 	return (
 		<>
-			<div className="absolute top-3 right-3 z-50">
+			<div className="absolute top-3 right-3 z-10">
 				{primaryColumn === "internalId" ? <PlayButton handlePlay={onSubmit} loading={isLoading} /> : <MergeButton hanldeClick={onSubmit} loading={isLoading} />}
 			</div>
 			<Editor
