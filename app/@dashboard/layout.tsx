@@ -26,7 +26,7 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 					additionalStyles="border-r-2 border-opacity-50 border-[#abb2bf]">
 					{sidebar}
 				</ResizablePane>
-				<div className={`flex flex-col flex-grow `}>
+				<div className={`flex flex-col flex-grow`}>
 					<ResizablePane minSize={0} initialSize={200} maxSize={1000} vertical bgColor={"bg-[#282a36]"} collapseThreshold={175} expansionThreshold={400}>
 						{input}
 					</ResizablePane>
@@ -38,7 +38,7 @@ const layout: React.FC<LayoutProps> = ({ children, codeEditor, sidebar, tabs, in
 						vertical
 						bgColor={"bg-[#282a36]"}
 						// add h-0 to allow the editor to controle the height
-						additionalStyles="z-10 border-t-2 border-opacity-50 border-[#abb2bf] h-0">
+						additionalStyles="z-0 border-t-2 border-opacity-50 border-[#abb2bf] h-0">
 						{codeEditor}
 					</ResizablePane>
 				</div>

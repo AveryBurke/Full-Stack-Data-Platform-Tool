@@ -39,7 +39,7 @@ const TooltipComponent: React.FC = () => {
 
 	return (
 		<div
-			className={`absolute p-2 bg-slate-50 text-slate-800 border border-gray-300 rounded-md shadow-md z-50 ` + placementStyles}
+			className={`absolute p-2 bg-slate-50 text-slate-800 border border-gray-300 rounded-md shadow-md` + placementStyles}
 			style={{ top: y, left: x, display: isOpen ? "flex" : "none", flexDirection: "column" }}>
 			<h3 className="font-bold text-center">{header}</h3>
 			{body.length > 0 && <hr className="my-2" />}

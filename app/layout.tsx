@@ -31,8 +31,8 @@ export default function RootLayout({
 				<HydrationBoundary>
 					<ToasterProvider />
 					<TooltipSettingsModal />
-					<TooltipComponent />
 					{dashboard}
+					<div id="portal-root"></div>
 				</HydrationBoundary>
 			</body>
 		</html>

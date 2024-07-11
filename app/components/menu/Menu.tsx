@@ -59,7 +59,7 @@ const Menu: React.FC<MenuProps> = ({ children, title }) => {
                             text-sm
 							transition-opacity
 							${visible ? "opacity-100" : "opacity-0"}
-							duration-250`
+							duration-200`
 							}>
 					<div onClick={closeMenu} className="flex flex-col flex-grow cursor-pointer text-sm">{children}</div></div>}
 		</>

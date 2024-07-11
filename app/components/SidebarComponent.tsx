@@ -1,11 +1,16 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useHeight } from "@/app/hooks/useHeight";
-import useTooltip from "@/app/hooks/useTooltip";
+import ToolTip from "@/app/components/ToolTip";
+// import Portal from "@/app/components/Portal";
+import usePortal from "../hooks/usePortal";
+// import useTooltip from "@/app/hooks/useTooltip";
 import Select, { components as C, DropdownIndicatorProps, SingleValue } from "react-select";
 import { useSpring, animated } from "react-spring";
 import { easings } from "@react-spring/web";
 import camelToFlat from "@/app/libs/camelToFlat";
+import { useDebouncedCallback } from "use-debounce";
+import { set } from "date-fns";
 
 /**
  * create a sidebar component that manages one slice of state
@@ -24,12 +29,24 @@ interface SidebarComponentWrapperProps {
 	handleReset: () => void;
 }
 
-const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ currentKey, title, options, children, handleChange, handleReset, sidebarComponentOptions }) => {
+const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({
+	currentKey,
+	title,
+	options,
+	children,
+	handleChange,
+	handleReset,
+	sidebarComponentOptions,
+}) => {
 	const [heightOn, setHeightOn] = useState(false);
 	const [sizingRef, contentHeight] = useHeight({ on: heightOn });
-	const { setCoords, setHeader, setBody, setAlignment, onOpen, onClose, isOpen } = useTooltip();
+	const [tooltipOpen, setTooltipOpen] = useState(false);
+	const [tooltipIsVisible, setTooltipIsVisible] = useState(false);
+	const [tooltipCoords, setCoords] = useState({ x: 0, y: 0 });
 	const numberOfRender = useRef(0);
 	const uiReady = useRef(false);
+
+	const Portal = usePortal(document.getElementById("portal-root")!);
 
 	// wait until the compnent has rendered to pass a ref
 	const activateRef = (ref: HTMLDivElement | null) => {
@@ -52,49 +69,45 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 
 	const refChevron = useRef<HTMLDivElement>(null);
 
-	const handleMouseEnter = () => {
-		if (!refChevron.current) return;
-		if (isOpen) return;
-		const bb = refChevron.current.getBoundingClientRect();
-		
-		if (sidebarComponentOptions?.tooltip) {
-			const { tooltip } = sidebarComponentOptions;
-			setHeader(tooltip.header);
-			setBody(tooltip.body || []);
-			setAlignment(tooltip.alignment || { x: "right", y: "center" });
-			
-		} else {
-			setHeader(title);
-			setBody([]);
-		}
-		setCoords({ x: bb.x + bb.width, y: bb.y });
-		onOpen();
-	};
-
-	const handleMouseLeave = () => {
-		if (!isOpen) return;
-		onClose();
-	};
+	// useEffect(() => {
+	// 	if (!refChevron.current) return;
+	// 	const bb = refChevron.current.getBoundingClientRect();
+	// 	console.log("should set tooltip coords ", { x: bb.x + bb.width, y: bb.y })
+	// 	setCoords({ x: bb.x + bb.width, y: bb.y });
+	// }, [refChevron.current]);
+	useEffect(() => {
+		console.log("toottip is open ", tooltipOpen);
+	}, [tooltipOpen]);
 
 	useEffect(() => {
-		numberOfRender.current++;
-		if (refChevron.current && numberOfRender.current >= 2) {
-			refChevron.current.addEventListener("mouseenter", handleMouseEnter);
-			refChevron.current.addEventListener("mouseleave", handleMouseLeave);
-		}
-		return () => {
-			if (refChevron.current) {
-				refChevron.current.removeEventListener("mouseenter", handleMouseEnter);
-				refChevron.current.removeEventListener("mouseleave", handleMouseLeave);
-			}
-		};
-	}, [refChevron.current, handleMouseEnter, handleMouseLeave]);
+		setTooltipOpen(false);
+	}, []);
+
+	const handleMouseEnter = useDebouncedCallback((e: React.MouseEvent) => {
+		if (tooltipOpen) return;
+		const bb = (e.target as HTMLElement).getBoundingClientRect();
+		setCoords({ x: bb.x + bb.width, y: bb.y });
+		// once the tool tip is open fade it in
+		setTooltipOpen(true);
+		setTimeout(() => {
+			setTooltipIsVisible(true);
+		}, 10);
+	}, 250);
+
+	const handleMouseLeave = useDebouncedCallback((e: React.MouseEvent) => {
+		// fade out the tool tip, then close it
+		setTooltipIsVisible(false);
+		setTimeout(() => {
+			setTooltipOpen(false);
+		}, 200);
+	}, 250);
 
 	// override the default dropdown indicator
-	// in order to add a ref and listeners for mouse enter and mouse leave, for the toolthip
+	// in order to warp the svg in a div to handle mouse events
+
 	const DropdownIndicator = (props: DropdownIndicatorProps) => {
 		return (
-			<div id={title + "-indicator-wrapper"} key={title + "-wrapper"} ref={refChevron}>
+			<div onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter}>
 				<C.DropdownIndicator {...props}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -113,6 +126,20 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 			</div>
 		);
 	};
+
+	const TT = (
+		<div className={"transition-opacity duration-200 " + (tooltipIsVisible ? "opacity-100" : "opacity-0")}>
+			<ToolTip coords={tooltipCoords} alignment={sidebarComponentOptions?.tooltip?.alignment || { x: "right", y: "center" }}>
+				{sidebarComponentOptions?.tooltip?.header && <h3 className="font-bold text-center">{sidebarComponentOptions.tooltip.header}</h3>}
+				{sidebarComponentOptions?.tooltip?.body?.length! > 0 && <hr className="my-2" />}
+				{sidebarComponentOptions?.tooltip?.body?.map((line, index) => (
+					<span key={index} className="text-sm text-slate-600">
+						{line}
+					</span>
+				))}
+			</ToolTip>
+		</div>
+	);
 
 	const components = {
 		DropdownIndicator,
@@ -175,6 +202,7 @@ const SidebarComponentWrapper: React.FC<SidebarComponentWrapperProps> = ({ curre
 				onChange={(e) => (e ? handleChange((e as SingleValue<{ value: string; label: string }>)!.value) : console.log(e))}
 				id={`${title}_select`}
 			/>
+			{tooltipOpen && <Portal>{TT}</Portal>}
 			<animated.div style={{ ...heightStyles, overflow: "hidden" }}>
 				<div ref={activateRef}>{currentKey.length ? children : null}</div>
 			</animated.div>
