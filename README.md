@@ -1,4 +1,4 @@
-This project is in progress and not currently deployed. It's a data management and visualization tool for the [AACT database of clinical trials](https://aact.ctti-clinicaltrials.org/) incorporating and expanding ideas from my time at [TrialTrace](https://demo.trialtrace.com/).
+This project is in progress and not currently hosted. It's a data management and visualization tool for the [AACT database of clinical trials](https://aact.ctti-clinicaltrials.org/) incorporating and expanding ideas from my time at [TrialTrace](https://demo.trialtrace.com/).
 
 ## Stack
 - [Next.js](https://nextjs.org/)
